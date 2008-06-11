@@ -16,7 +16,7 @@ module AppHelpers
         :widths => widths
       }
 
-      block_to_partial 'shared/tbl/row', {
+      block_to_partial 'app_helpers/tbl/row', {
         :name  => name.to_s,
         :style => "width:#{width}#{unit.to_s};"
       }, &block
@@ -37,7 +37,7 @@ module AppHelpers
         row[:margin] = margin -= width
       end
 
-      block_to_partial 'shared/tbl/cell', {
+      block_to_partial 'app_helpers/tbl/cell', {
         :name  => name.to_s,
         :count => row[:count].to_s,
         :style => "width:#{width.to_s}#{unit};" + style

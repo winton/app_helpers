@@ -1,7 +1,7 @@
 module AppHelpers
   
   def create_template(id, &block)
-    block_to_partial 'shared/template/textarea', { :id => id }, &block
+    block_to_partial 'app_helpers/template/textarea', { :id => id }, &block
   end
   
   def template(id, path=nil, locals={})

@@ -1,5 +1,5 @@
 desc 'Updates views/shared for all resources'
-task :app_helpers => [ 'app_helpers:js_widget', 'app_helpers:tbl', 'app_helpers:template' ]
+task :app_helpers => [ 'app_helpers:tbl', 'app_helpers:template' ]
 
 namespace :app_helpers do  
   desc 'Updates views/app_helpers/tbl'
@@ -13,13 +13,13 @@ namespace :app_helpers do
   end
     
   def copy_resource(helper, type, location)
-    location += "/app_helpers/#{helper}"
+    location += "/app_helpers"
     if File.file? location
       puts "=> Removing old #{helper} #{type}..."
       system "rm -Rf #{location}"
     end
-    puts "=> Copying #{type}..."
+    puts "=> Copying #{helper} #{type}..."
     system "mkdir -p #{location}"
-    system "cp #{File.dirname(__FILE__)}/../resources/#{type}/#{helper} #{location}"
+    system "cp -Rf #{File.dirname(__FILE__)}/../resources/#{type}/#{helper} #{location}"
   end
 end
