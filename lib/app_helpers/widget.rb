@@ -64,7 +64,7 @@ private
       :js    => "#{base}/javascripts",
       :css   => "#{base}/stylesheets",
       :sass  => "#{base}/stylesheets/sass",
-      :asset => "widgets/#{asset}"
+      :asset => "widgets/#{asset}",
       :copy_to => {
         :js   => "public/javascripts/widgets/#{asset}",
         :css  => "public/stylesheets/widgets/#{asset}",
