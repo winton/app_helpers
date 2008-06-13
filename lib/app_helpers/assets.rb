@@ -1,19 +1,25 @@
 module AppHelpers
   
-  def javascripts(&block)
-    if block
-      @javascripts ||= []
-      @javascripts  << capture(&block)
+  def javascripts(*scripts, &block)
+    @javascripts ||= { :captures => [], :scripts => [] }
+    @javascripts[:captures].push(capture(&block)) if block
+    @javascripts[:scripts ].push(scripts)         unless scripts.empty?
+    if !scripts && !block
+      [ @javascripts[:scripts ].reverse.collect { |scripts| javascript_include_tag *(scripts + [ { :cache => true } ]) },
+        @javascripts[:captures].reverse
+      ].flatten.join "\n"
     end
-    @javascripts ? @javascripts.reverse.join("\n") : nil
   end
   
-  def stylesheets(&block)
-    if block
-      @stylesheets ||= []
-      @stylesheets  << capture(&block)
+  def stylesheets(*sheets, &block)
+    @stylesheets ||= { :captures => [], :sheets => [] }
+    @stylesheets[:captures].push(capture(&block)) if block
+    @stylesheets[:sheets  ].push(sheets)          unless sheets.empty?
+    if !sheets && !block
+      [ @stylesheets[:sheets  ].reverse.collect { |sheets| stylesheet_link_tag *(sheets + [ { :cache => true } ]) },
+        @stylesheets[:captures].reverse
+      ].flatten.join "\n"
     end
-    @stylesheets ? @stylesheets.reverse.join("\n") : nil
   end
   
   def default_javascript

@@ -19,7 +19,13 @@ module AppHelpers
       args.pop
     end
     
-    js.flatten.inspect
+    # See assets.rb
+    javascripts js
+    stylesheets css + sass
+  end
+  
+  def widget_partial(*args)
+    path = args.join('/widgets/')
   end
 
 private
@@ -49,11 +55,7 @@ private
   end
   
   def needs_update?(from, to)
-    if !File.exists?(to)
-      true
-    else
-      File.mtime(from) > File.mtime(to)
-    end
+    File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
   end
 
   def widget_paths(path)
