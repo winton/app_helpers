@@ -1,25 +1,15 @@
 module AppHelpers
   
-  def javascripts(*scripts, &block)
-    @javascripts ||= { :captures => [], :scripts => [] }
-    @javascripts[:captures].push(capture(&block)) if block
-    @javascripts[:scripts ].push(scripts)         unless scripts.empty?
-    if !scripts && !block
-      [ @javascripts[:scripts ].reverse.collect { |scripts| javascript_include_tag *(scripts + [ { :cache => true } ]) },
-        @javascripts[:captures].reverse
-      ].flatten.join "\n"
-    end
+  def javascripts(*paths, &block)
+    add_assets :javascripts, paths, &block
   end
   
-  def stylesheets(*sheets, &block)
-    @stylesheets ||= { :captures => [], :sheets => [] }
-    @stylesheets[:captures].push(capture(&block)) if block
-    @stylesheets[:sheets  ].push(sheets)          unless sheets.empty?
-    if !sheets && !block
-      [ @stylesheets[:sheets  ].reverse.collect { |sheets| stylesheet_link_tag *(sheets + [ { :cache => true } ]) },
-        @stylesheets[:captures].reverse
-      ].flatten.join "\n"
-    end
+  def stylesheets(*paths, &block)
+    add_assets :stylesheets, paths, &block
+  end
+  
+  def templates(*paths, &block)
+    add_assets :templates, paths, &block
   end
   
   def default_javascript
@@ -28,6 +18,44 @@ module AppHelpers
   
   def default_stylesheet
     stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
+  end
+  
+private
+
+  def add_assets(type, paths, &block)
+    @assets       ||= {}
+    @assets[type] ||= { :captures => [], :paths => [] }
+    assets = @assets[type]
+    paths  = nil if paths.empty?
+    assets[:captures].push(capture(&block)) if block
+    assets[:paths   ].push(paths)           if paths
+    if !paths && !block
+      remove_dups assets[:paths]
+      [ assets[:paths].reverse.collect { |paths|
+          case type
+          when :javascripts
+            javascript_include_tag *(paths + [ { :cache => true } ])
+          when :stylesheets
+            stylesheet_link_tag *(paths + [ { :cache => true } ])
+          when :templates
+            paths.collect { |path| template path.split('/').join('_'), path }.join "\n"
+          end
+        },
+        assets[:captures].reverse
+      ].flatten.join "\n"
+    end
+  end
+
+  def remove_dups(arr, list=[])
+    arr.each do |a|
+      if a.respond_to?(:pop)
+        remove_dups a, list
+      elsif list.include?(a)
+        a.delete a
+      else
+        list << a
+      end
+    end
   end
   
 end
