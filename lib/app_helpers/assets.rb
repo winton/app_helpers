@@ -10,6 +10,7 @@ module AppHelpers
   
   def templates(*paths, &block)
     add_assets :templates, paths, &block
+    nil
   end
   
   def default_javascript
@@ -23,7 +24,7 @@ module AppHelpers
 private
 
   def add_assets(type, paths, &block)
-    @assets       ||= {}
+    @assets ||= {}
     @assets[type] ||= { :captures => [], :paths => [] }
     assets = @assets[type]
     paths  = nil if paths.empty?
@@ -38,7 +39,7 @@ private
           when :stylesheets
             stylesheet_link_tag *(paths + [ { :cache => true } ])
           when :templates
-            paths.collect { |path| template path.split('/').join('_'), path }.join "\n"
+            paths.collect { |path| template path[0], path[1], path[2] }.join "\n"
           end
         },
         assets[:captures].reverse

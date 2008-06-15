@@ -7,25 +7,43 @@ module AppHelpers
     js   = []
     css  = []
     sass = []
+    init = []
     
     while args.length > 0
-      paths   = widget_paths args.join('/widgets/')
+      path    = args.join('/widgets/')
+      paths   = widget_paths path
       options = options.merge eval(File.read(paths[:def]))
       
       js   << update_directory(paths, options, :js)
       css  << update_directory(paths, options, :css)
       sass << update_directory(paths, options, :sass)
       
+      # Update templates
+      Dir["#{paths[:jst]}/*"].each do |file|
+        base = File.basename(file).split('.')[0][1..-1]
+        id   = [ paths[:asset].split('/'), base ].flatten.join('_')
+        file = "#{path}/templates/#{base}"
+        templates [ id, file, options ]
+      end
+      
+      # Init partials
+      Dir["#{paths[:html]}/_init.*"].each do |file|
+        base = File.basename(file).split('.')[0][1..-1]
+        init << render_to_string(:partial => "#{path}/partials/#{base}", :locals => options)
+      end
+      
       args.pop
     end
     
     # See assets.rb
-    javascripts *js.flatten
-    stylesheets *(css.flatten + sass.flatten)
+    javascripts *js.reverse.flatten
+    stylesheets *(css.reverse.flatten + sass.reverse.flatten)
+    
+    init.join "\n"
   end
   
   def widget_partial(*args)
-    path = args.join('/widgets/')
+    path = args.join('/widgets/') + "/templates/#{args.pop}"
   end
 
 private
@@ -54,7 +72,7 @@ private
         system "mkdir -p #{File.dirname t}"
         system "cp -f #{f} #{t}"
       end
-      [ paths[:asset], File.basename(f, ".#{type}") ].join '/'
+      [ 'widgets', paths[:asset], File.basename(f, ".#{type}") ].join '/'
     end
     
     # Copy ERB files
@@ -66,7 +84,7 @@ private
           file.write ERB.new(File.read(f)).result(options_binding(options))
         end
       end
-      [ paths[:asset], File.basename(f, ".#{type}.erb") ].join '/'
+      [ 'widgets', paths[:asset], File.basename(f, ".#{type}.erb") ].join '/'
     end
   end
   
@@ -88,9 +106,11 @@ private
     {
       :def   => "#{base}/options.rb",
       :js    => "#{base}/javascripts",
+      :jst   => "#{base}/templates",
       :css   => "#{base}/stylesheets",
       :sass  => "#{base}/stylesheets",
-      :asset => "widgets/#{asset}",
+      :html  => "#{base}/partials",
+      :asset => "#{asset}",
       :copy_to => {
         :js   => "public/javascripts/widgets/#{asset}",
         :css  => "public/stylesheets/widgets/#{asset}",
