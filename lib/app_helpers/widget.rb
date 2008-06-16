@@ -1,6 +1,85 @@
 module AppHelpers
   
-  def widget(*args)
+  class Widget
+    attr :assets,  true
+    attr :lineage, true
+    attr :options, true
+    attr :logger,  true
+    
+    def initialize(controller, *lineage)
+      @controller = controller
+      @logger     = []
+      
+      @options = lineage.extract_options!
+      @lineage = lineage
+      return  if lineage.empty?
+      
+      @assets  = { :javascripts => [], :stylesheets => [], :templates => [] }
+      @options = merged_options.merge @options
+      
+      update_assets :javascripts
+      update_assets :stylesheets
+    end
+    
+    private
+    
+    def merged_options(index=0, options={})
+      return if index >= @lineage.length
+      path = to_string :options, index
+      options.merge!(eval(File.read(path))) if File.exists?(path)
+      merged_options index+1, options
+      options
+    end
+    
+    def needs_update?(from, to)
+      File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
+    end
+    
+    def to_string(type, index=@lineage.length-1)
+      lineage = @lineage[0..index]
+      asset   = [ @lineage.join('_'), lineage.join('/') ].join '/'
+      base    = 'app/widgets/' + lineage.join('/widgets/')
+      case type
+      when :base:          base
+      when :asset:         asset
+      when :options:       base + '/options.rb'
+      when :javascripts: [ base + '/javascripts', 'public/javascripts/widgets/' + asset ]
+      when :stylesheets: [ base + '/stylesheets', 'public/stylesheets/widgets/' + asset ]
+      end
+    end
+    
+    def update_assets(type, index=0)
+      return if index >= @lineage.length
+      @assets[type] += update_directory(*to_string(type, index), index))
+      update_assets(type, index + 1)
+    end
+    
+    def update_directory(from, to, index)
+      Dir["#{from}/*"].collect do |f|
+        t = to + f[from.length..-1]
+        t.gsub!('/widgets/', '/sass/widgets/') if f.include?('.sass')
+        update_directory(f, t, index) and next if File.directory?(f)
+        if needs_update?(f, t)
+          @logger << 'CREATE ' + t.inspect
+          @logger << 'FROM   ' + f.inspect
+          FileUtils.mkdir_p File.dirname(t)
+          File.open t, 'w' do |file|
+            file.write @controller.render_to_string(:file => f, :locals => @options)
+          end
+        end
+        [ 'widgets', to_string(:asset, index), File.basename(t).split('.')[0] ].join '/'
+      end
+    end
+  end
+  
+  ##########
+  
+  def widget(*lineage)
+    w = Widget.new(controller, *lineage)
+    [w.assets.inspect, w.lineage.inspect, w.options.inspect, w.logger.join("<br/>")].join "<br/><br/>"
+  end
+  
+  def widget2(*args)
     options = args.extract_options!
     return if args.empty?
     
@@ -48,6 +127,18 @@ module AppHelpers
 
 private
   
+  def needs_update?(from, to)
+    File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
+  end
+  
+  def options_binding(options)
+    evals = ''
+    pairs = options.to_a
+    pairs.each_index { |i| evals += "#{pairs[i][0]} = pairs[#{i}][1];" }
+    eval evals
+    binding
+  end
+  
   def update_directory(paths, options, type)
     path_from = paths[type]
     path_to   = paths[:copy_to][type]
@@ -86,18 +177,6 @@ private
       end
       [ 'widgets', paths[:asset], File.basename(f, ".#{type}.erb") ].join '/'
     end
-  end
-  
-  def options_binding(options)
-    evals = ''
-    pairs = options.to_a
-    pairs.each_index { |i| evals += "#{pairs[i][0]} = pairs[#{i}][1];" }
-    eval evals
-    binding
-  end
-  
-  def needs_update?(from, to)
-    File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
   end
 
   def widget_paths(path)
