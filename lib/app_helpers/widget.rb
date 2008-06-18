@@ -50,7 +50,7 @@ module AppHelpers
     
     def update_assets(type, index=0)
       return if index >= @lineage.length
-      @assets[type] += update_directory(*to_string(type, index), index))
+      @assets[type] += update_directory(*(to_string(type, index) + [index]))
       update_assets(type, index + 1)
     end
     
