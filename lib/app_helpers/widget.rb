@@ -11,6 +11,8 @@ module AppHelpers
   def widget_partial(*lineage)
     options = lineage.extract_options!
     partial = lineage.pop
+    options[:locals] ||= {}
+    options[:locals].merge options_for_render
     render options.merge(:partial => "#{lineage.join('/widgets/')}/partials/#{partial}")
   end
   

@@ -1,0 +1,220 @@
+= app_helpers
+
+A collection of useful Rails application helpers.
+
+
+== Installation
+
+Add app_helper submodule
+
+  git submodule add git@github.com:winton/app_helpers.git vendor/plugins/app_helpers
+  
+Copy resources (<tt>app/views/app_helpers</tt>)
+
+  rake app_helpers
+
+
+== Assets
+
+=== <tt>default_javascript</tt>
+
+  javascript_include_tag "#{params[:controller]}/#{params[:action]}"
+
+=== <tt>default_stylesheet</tt>
+
+  stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
+
+=== <tt>javascripts(*paths, &block)</tt>
+
+Define javascript dependencies from your views.
+
+The view:
+
+  - javascripts 'js_file_1', 'js_file_2' do
+    %script alert('test')
+
+The layout:
+
+  = javascripts
+
+Output:
+  
+  <script src="/javascripts/js_file_1.js?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" type="text/javascript"></script>
+  <script src="/javascripts/js_file_2.js?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" type="text/javascript"></script>
+  <script>alert('test')</script>
+
+=== <tt>stylesheets(*paths, &block)</tt>
+
+Define CSS dependencies from your views.
+
+The view:
+
+  - stylesheets 'css_file_1', 'css_file_2' do
+    default_stylesheet
+
+The layout:
+
+  = stylesheets
+
+Output:
+
+  <link href="/stylesheets/css_file_1.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
+  <link href="/stylesheets/css_file_2.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
+  <link href="/stylesheets/controller/action.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
+
+
+=== <tt>templates(*paths, &block)</tt>
+
+Define JST templates from your view (see Template).
+
+The view:
+
+  - templates [ 'textarea_id', 'path/to/partial', { :partial_local => 0 } ]
+
+The layout:
+
+  = templates
+
+Output:
+
+  <textarea id="textarea_id">partial content</textarea>
+
+
+== Partials
+
+=== <tt>block_to_partial(partial_name, options = {}, &block)</tt>
+
+Sends the output of a block to a partial as the local variable 'body'.
+
+Example:
+
+  = block_to_partial 'some_partial', :locals => { :x => 0 } do
+    Two local variables will be sent to the partial; 'x' (0) and 'body' (this text).
+
+
+== MooTools
+
+=== <tt>mootools</tt>
+
+The javascript path to the MooTools library. In development mode, returns <tt>stutools/assets/moo</tt>. In production, returns <tt>moo</tt>.
+
+=== <tt>stutools</tt>
+
+The javascript path to the StuTools library. In development mode, returns an array of paths (<tt>stutools/*.js</tt>). In production, returns <tt>stu</tt>.
+
+*Note*: Commonly both are included with
+
+  = javascript_include_tag *(mootools + stutools + [ :cache => true ])
+
+
+== Tbl
+
+=== <tt>tbl(type, name, unit=nil, *widths, &block)</tt>
+
+Uses the partials in <tt>app/views/app_helpers/tbl</tt> to generate CSS tables (rows of content with specific column widths).
+
+Include the following in your site-wide SASS:
+
+  .row
+    :overflow hidden
+    .parent
+      :float left
+      :display block
+
+The view:
+
+  - tbl :row, :your_identifier, :px, 100, 200, 300 do
+    - tbl :cell, :your_identifier do
+      Row 1, Cell 1
+    - tbl :cell, :your_identifier do
+      Row 1, Cell 2
+    - tbl :cell, :your_identifier do
+      Row 1, Cell 3
+    - tbl :cell, :your_identifier do
+      Row 2, Cell 1
+    - tbl :cell, :your_identifier do
+      Row 2, Cell 2
+    - tbl :cell, :your_identifier do
+      Row 2, Cell 3
+
+*Note*: Change <tt>:px</tt> to <tt>'%'</tt> for percentage widths.
+
+
+== Template
+
+=== <tt>template(id, path=nil, locals={})</tt>
+
+Renders a partial inside a textarea tag for use with JST. Uses the partial in <tt>app/views/app_helpers/template</tt>.
+
+Example:
+
+  = template :textarea_id, 'path/to/partial', :local_variable => 0
+
+Output:
+
+  <textarea id="textarea_id">partial content</textarea>
+
+*Note*: If the path is not included, the partial path is taken from the id.
+
+
+== Truncate
+
+=== <tt>better_truncate(text, length = 80, truncate_string = "...")</tt>
+
+Truncates without cutting words in half.
+
+
+== Widget
+
+=== <tt>widget(*lineage)</tt>
+
+Groups js, css, templates, and partials around a particular UI element.
+
+The directory structure allows for widgets to be built on top of each other (versioned).
+
+  app/
+    widgets/
+      widget_name/
+        options.rb
+          { option: true, option2: false }
+        javascripts/
+          _init.js.erb
+        partials/
+          _init.haml
+        stylesheets/
+        templates/
+        widgets/
+          widget_name_v2/
+            options.rb
+            ...and so on
+
+Example:
+
+  = widget :widget_name, :widget_name_v2, { option: false, option2: true }
+  
+What does this call do?
+
+- First run
+  - Merges the options.rb hashes, with newer versioned widgets taking precedent over older versions
+  - Renders javascripts and stylesheets as ERB with options available as local variables
+    - Copies them to widgets/widget_name_widget_name_v2 in their respective public folders
+
+- Every time
+  - Adds javascripts, stylesheets, and templates from all versions using the *Asset* helper
+  - Merges options.rb hashes with options parameter in the widget call
+  - Renders partials/_init.* to the view (where the widget call was made), making options available as a local variable
+  - Renders javascripts/_init.js.erb to the javascript *Asset* helper, making options available as a local variable
+
+Versioned widgets?
+
+- Every widget can optionally have a <tt>widgets/</tt> directory
+- <tt>widget_name/widgets/widget_name_v2/SOME_FILE</tt> will overwrite <tt>widget_name/SOME_FILE</tt>
+  - init files are the exception, they are joined together, beginning with the oldest version
+
+=== <tt>widget_partial(*lineage)</tt>
+
+Renders a partial in the widget's <tt>partials</tt> directory, making the widget options available to the partial.
+
+Example:
+
+  = widget_partial :widget_name, :widget_name_v2, :some_partial, { :locals => { option: true, option2: false } }

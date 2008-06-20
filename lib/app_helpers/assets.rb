@@ -1,5 +1,13 @@
 module AppHelpers
   
+  def default_javascript
+    javascript_include_tag "#{params[:controller]}/#{params[:action]}"
+  end
+  
+  def default_stylesheet
+    stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
+  end
+  
   def javascripts(*paths, &block)
     add_assets :javascripts, paths, &block
   end
@@ -11,14 +19,6 @@ module AppHelpers
   def templates(*paths, &block)
     add_assets :templates, paths, &block
     nil
-  end
-  
-  def default_javascript
-    javascript_include_tag "#{params[:controller]}/#{params[:action]}"
-  end
-  
-  def default_stylesheet
-    stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
   end
   
 private
