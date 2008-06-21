@@ -26,9 +26,9 @@ Copy resources (<tt>app/views/app_helpers</tt>)
 
 === <tt>javascripts(*paths, &block)</tt>
 
-Define javascript dependencies from your views.
+Define javascript dependencies from outside of the layout.
 
-The view:
+The action view:
 
   - javascripts 'js_file_1', 'js_file_2' do
     %script alert('test')
@@ -45,9 +45,9 @@ Output:
 
 === <tt>stylesheets(*paths, &block)</tt>
 
-Define CSS dependencies from your views.
+Define CSS dependencies from outside the layout.
 
-The view:
+The action view:
 
   - stylesheets 'css_file_1', 'css_file_2' do
     default_stylesheet
@@ -65,9 +65,9 @@ Output:
 
 === <tt>templates(*paths, &block)</tt>
 
-Define JST templates from your view (see Template).
+Define JST templates from outside the layout. Requires *Template*.
 
-The view:
+The action view:
 
   - templates [ 'textarea_id', 'path/to/partial', { :partial_local => 0 } ]
 
@@ -105,6 +105,25 @@ The javascript path to the StuTools library. In development mode, returns an arr
 *Note*: Commonly both are included with
 
   = javascript_include_tag *(mootools + stutools + [ :cache => true ])
+
+
+== Rake Tasks
+
+=== <tt>rake app_helpers</tt>
+  
+Installs <tt>app/views/app_helpers</tt>, which includes a few partials required by *Tbl* and *Template*.
+
+=== <tt>rake git:submodule</tt>
+
+Runs <tt>git:submodule:init</tt>, <tt>git:submodule:update</tt>, and <tt>git:submodule:pull</tt>.
+
+=== <tt>rake git:submodule:pull</tt>
+
+Finds git projects in <tt>config</tt>, <tt>public/javascripts</tt>, and <tt>vendor/plugins</tt> and runs
+  
+  git pull origin master
+
+on each.
 
 
 == Tbl
@@ -178,7 +197,7 @@ The directory structure allows for widgets to be built on top of each other (ver
         options.rb
           { option: true, option2: false }
         javascripts/
-          _init.js.erb
+          init.js
         partials/
           _init.haml
         stylesheets/
@@ -192,20 +211,20 @@ Example:
 
   = widget :widget_name, :widget_name_v2, { option: false, option2: true }
   
-What does this call do?
+<b>What does this call do?</b>
 
 - First run
-  - Merges the options.rb hashes, with newer versioned widgets taking precedent over older versions
+  - Merges the <tt>options.rb</tt> hashes, with newer versioned widgets taking precedent over older versions
   - Renders javascripts and stylesheets as ERB with options available as local variables
-    - Copies them to widgets/widget_name_widget_name_v2 in their respective public folders
+    - Copies them to <tt>widgets/widget_name_widget_name_v2</tt> in their respective public folders
 
 - Every time
   - Adds javascripts, stylesheets, and templates from all versions using the *Asset* helper
-  - Merges options.rb hashes with options parameter in the widget call
-  - Renders partials/_init.* to the view (where the widget call was made), making options available as a local variable
-  - Renders javascripts/_init.js.erb to the javascript *Asset* helper, making options available as a local variable
+  - Merges <tt>options.rb</tt> hashes with options parameter in the widget call
+  - Renders <tt>partials/_init.*</tt> to the view (where the widget call was made), making options available as a local variable
+  - Renders <tt>javascripts/_init.js.erb</tt> to the javascript *Asset* helper, making options available as a local variable
 
-Versioned widgets?
+<b>Versioned widgets?</b>
 
 - Every widget can optionally have a <tt>widgets/</tt> directory
 - <tt>widget_name/widgets/widget_name_v2/SOME_FILE</tt> will overwrite <tt>widget_name/SOME_FILE</tt>
