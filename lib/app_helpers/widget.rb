@@ -1,23 +1,41 @@
 module AppHelpers
   
   def widget(*lineage)
-    w = Widget.new controller, logger, *lineage
+    options  = lineage.extract_options!
+    unless w = widget_instance(lineage)
+      w = Widget.new controller, logger, lineage, options
+      widget_instance lineage, w
+    end
     stylesheets *w.assets[:stylesheets]
     javascripts *w.assets[:javascripts] do
       w.render_init :js
     end
-    templates *w.assets[:templates].collect do |t|
+    templates *(w.assets[:templates].collect do |t|
       [ File.basename(t), t, w.options_for_render(w.options) ]
-    end
+    end)
     w.render_init :partials
+  end
+  
+  def widget_image(*lineage)
+    options = lineage.extract_options!
+    image   = lineage.pop
+    image_tag "#{lineage.join('_')}/#{image}", options
   end
   
   def widget_partial(*lineage)
     options = lineage.extract_options!
     partial = lineage.pop
-    options[:locals] ||= {}
-    options[:locals].merge! options_for_render
+    if w = widget_instance(lineage)
+      options[:locals] ||= {}
+      options[:locals].merge! w.options_for_render
+    end
     render options.merge(:partial => "#{lineage.join('/widgets/')}/partials/#{partial}")
+  end
+  
+  private
+  
+  def widget_instance(lineage, value=nil)
+    eval "@widget_#{lineage.join('_')}#{value ? " = value" : ''}"
   end
   
   class Widget
@@ -27,20 +45,23 @@ module AppHelpers
     attr :options,    true
     attr :options_rb, true
     
-    def initialize(controller, logger, *lineage)
+    def initialize(controller, logger, lineage, options)
       @controller = controller
       @logger  = logger
-      
-      @options = lineage.extract_options!
+      @options = options
       @lineage = lineage
-      return  if lineage.empty?
       
-      @assets  = { :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => [] }
+      return if lineage.empty?
+      
       @options_rb = options_rb
+      @assets = {
+        :images => [], :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => []
+      }
       
       update_asset_partials :init_js
       update_asset_partials :init_partials
       update_asset_partials :templates
+      update_assets :images
       update_assets :javascripts
       update_assets :stylesheets
     end
@@ -65,8 +86,9 @@ module AppHelpers
       when :asset:         asset
       when :options:       base + '/options.rb'
       when :init_js:       base + '/javascripts/init'
-      when :templates:     base + '/templates'
       when :init_partials: base + '/partials/_init'
+      when :templates:     base + '/templates'
+      when :images:      [ base + '/images',      'public/images/widgets/'      + asset ]
       when :javascripts: [ base + '/javascripts', 'public/javascripts/widgets/' + asset ]
       when :stylesheets: [ base + '/stylesheets', 'public/stylesheets/widgets/' + asset ]
       end
@@ -78,7 +100,14 @@ module AppHelpers
       base = File.basename f
       dir  = File.dirname f
       f    = [ dir, (base[0..0] == '_' ? base[1..-1] : base ).split('.')[0] ].join '/'
-      remove ? f.gsub(remove, '') : f
+      if remove
+        if remove.respond_to?(:pop)
+          remove.each { |r| f.gsub! r, '' }
+        else
+          f.gsub! remove, ''
+        end
+      end
+      f
     end
     
     def update_asset_partials(type, index=0)
@@ -110,6 +139,7 @@ module AppHelpers
     
     def update_directory(from, to, index, type)
       Dir["#{from}/*"].collect do |f|
+        next if f.include?('/init.js')
         t = to + f[from.length..-1]
         if File.directory?(f)
           update_directory f, t, index, type
@@ -117,13 +147,17 @@ module AppHelpers
           t.gsub!('/widgets/', '/sass/widgets/') if f.include?('.sass')
           if to && needs_update?(f, t)
             FileUtils.mkdir_p File.dirname(t)
-            File.open t, 'w' do |file|
-              file.write @controller.render_to_string(:file => f, :locals => options_for_render)
+            if type == :images
+              FileUtils.copy f, t
+            else
+              File.open t, 'w' do |file|
+                file.write @controller.render_to_string(:file => f, :locals => options_for_render)
+              end
             end
           end
-          filename_to_partial t, "public/#{type}/"
+          filename_to_partial t, [ "public/#{type}/", 'sass/' ]
         end
-      end.flatten
+      end.compact.flatten
     end
   end
   

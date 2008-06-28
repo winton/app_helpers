@@ -1,11 +1,11 @@
 module AppHelpers
   
   def default_javascript
-    javascript_include_tag "#{params[:controller]}/#{params[:action]}"
+    "#{params[:controller]}/#{params[:action]}"
   end
   
   def default_stylesheet
-    stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
+    "#{params[:controller]}/#{params[:action]}"
   end
   
   def javascripts(*paths, &block)
@@ -25,25 +25,33 @@ private
 
   def add_assets(type, paths, &block)
     @assets ||= {}
-    @assets[type] ||= { :captures => [], :paths => [] }
-    assets = @assets[type]
-    paths  = nil if paths.empty?
-    assets[:captures].push(capture(&block)) if block
-    assets[:paths   ].push(paths)           if paths
+    @assets[type] ||= []
+    
+    paths = nil if paths.empty?
+    @assets[type].push(capture(&block)) if block
+    @assets[type].push(paths          ) if paths
+    
     if !paths && !block
-      remove_dups assets[:paths]
-      [ assets[:paths].reverse.collect { |paths|
+      remove_dups @assets[type]
+      @assets[type].reverse.collect do |item|
+        if item.respond_to?(:pop)
           case type
           when :javascripts
-            javascript_include_tag *(paths + [ { :cache => true } ])
+            javascript_include_tag *(item + [ { :cache => true } ])
           when :stylesheets
-            stylesheet_link_tag *(paths + [ { :cache => true } ])
+            stylesheet_link_tag    *(item + [ { :cache => true } ])
           when :templates
-            paths.collect { |path| template path[0], path[1], path[2] }.join "\n"
+            paths.collect { |path| template item[0], item[1], item[2] }.join "\n"
+          end + "\n"
+        else
+          case type
+          when :javascripts
+            "<script type='text/javascript'>\n#{item}\n</script>\n"
+          else
+            item
           end
-        },
-        assets[:captures].reverse
-      ].flatten.join "\n"
+        end
+      end
     end
   end
 

@@ -18,11 +18,11 @@ Copy resources (<tt>app/views/app_helpers</tt>)
 
 === <tt>default_javascript</tt>
 
-  javascript_include_tag "#{params[:controller]}/#{params[:action]}"
+  "#{params[:controller]}/#{params[:action]}"
 
 === <tt>default_stylesheet</tt>
 
-  stylesheet_link_tag "#{params[:controller]}/#{params[:action]}"
+  "#{params[:controller]}/#{params[:action]}"
 
 === <tt>javascripts(*paths, &block)</tt>
 
@@ -31,7 +31,7 @@ Define javascript dependencies from outside of the layout.
 The action view:
 
   - javascripts 'js_file_1', 'js_file_2' do
-    %script alert('test')
+    alert('test')
 
 The layout:
 
@@ -41,7 +41,7 @@ Output:
   
   <script src="/javascripts/js_file_1.js?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" type="text/javascript"></script>
   <script src="/javascripts/js_file_2.js?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" type="text/javascript"></script>
-  <script>alert('test')</script>
+  <script type="text/javascript">alert('test')</script>
 
 === <tt>stylesheets(*paths, &block)</tt>
 
@@ -49,8 +49,7 @@ Define CSS dependencies from outside the layout.
 
 The action view:
 
-  - stylesheets 'css_file_1', 'css_file_2' do
-    default_stylesheet
+  - stylesheets 'css_file_1', 'css_file_2', default_stylesheet
 
 The layout:
 
@@ -58,9 +57,9 @@ The layout:
 
 Output:
 
-  <link href="/stylesheets/css_file_1.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
-  <link href="/stylesheets/css_file_2.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
-  <link href="/stylesheets/controller/action.css?4dd28de5c70d6d4022d779c5185f9a79cb1ae84a" media="screen" rel="stylesheet" type="text/css" />
+  <link href="/stylesheets/css_file_1.css?xxx" media="screen" rel="stylesheet" type="text/css" />
+  <link href="/stylesheets/css_file_2.css?xxx" media="screen" rel="stylesheet" type="text/css" />
+  <link href="/stylesheets/controller/action.css?xxx" media="screen" rel="stylesheet" type="text/css" />
 
 
 === <tt>templates(*paths, &block)</tt>
