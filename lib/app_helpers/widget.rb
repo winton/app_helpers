@@ -6,14 +6,20 @@ module AppHelpers
       w = Widget.new controller, logger, lineage, options
       widget_instance lineage, w
     end
-    stylesheets *w.assets[:stylesheets]
     javascripts *w.assets[:javascripts] do
-      w.render_init :js
+      w.render_init(:js) unless options[:dependencies_only]
     end
+    stylesheets *w.assets[:stylesheets]
     templates *(w.assets[:templates].collect do |t|
       [ File.basename(t), t, w.options_for_render(w.options) ]
     end)
-    w.render_init :partials
+    if options[:dependencies_only]
+      nil
+    elsif options[:render_js]
+      w.render_init(:partials) + "\n<script type='text/javascript'>\n#{w.render_init :js}\n</script>"
+    else
+      w.render_init :partials
+    end
   end
   
   def widget_image(*lineage)

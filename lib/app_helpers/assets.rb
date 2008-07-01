@@ -46,7 +46,7 @@ private
         else
           case type
           when :javascripts
-            "<script type='text/javascript'>\n#{item}\n</script>\n"
+            "<script type='text/javascript'>\n#{item}\n</script>\n" unless item.blank?
           else
             item
           end
