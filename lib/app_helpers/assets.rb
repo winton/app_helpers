@@ -32,8 +32,8 @@ private
     @assets[type].push(paths          ) if paths
     
     if !paths && !block
-      remove_dups @assets[type]
-      @assets[type].reverse.collect do |item|
+      remove_dups @assets[type].reverse!
+      @assets[type].collect do |item|
         if item.respond_to?(:pop)
           case type
           when :javascripts
@@ -60,7 +60,7 @@ private
       if a.respond_to?(:pop)
         remove_dups a, list
       elsif list.include?(a)
-        a.delete a
+        arr.delete a
       else
         list << a
       end

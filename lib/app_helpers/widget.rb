@@ -15,7 +15,7 @@ module AppHelpers
     end)
     if options[:dependencies_only]
       nil
-    elsif options[:render_js]
+    elsif options[:include_js]
       w.render_init(:partials) + "\n<script type='text/javascript'>\n#{w.render_init :js}\n</script>"
     else
       w.render_init :partials
@@ -85,7 +85,7 @@ module AppHelpers
     
     def to_path(type, index=0)
       lineage = @lineage[0..index]
-      asset   = @lineage.join('_')
+      asset   = lineage.join('/')
       base    = 'app/widgets/' + lineage.join('/widgets/')
       case type
       when :base:          base
