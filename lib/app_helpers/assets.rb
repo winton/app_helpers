@@ -37,9 +37,9 @@ private
         if item.respond_to?(:pop)
           case type
           when :javascripts
-            javascript_include_tag *(item + [ { :cache => true } ])
+            javascript_include_tag item
           when :stylesheets
-            stylesheet_link_tag    *(item + [ { :cache => true } ])
+            stylesheet_link_tag item
           when :templates
             paths.collect { |path| template item[0], item[1], item[2] }.join "\n"
           end + "\n"
