@@ -28,6 +28,7 @@ private
     @assets[type] ||= []
     
     paths = nil if paths.empty?
+    
     @assets[type].push(capture(&block)) if block
     @assets[type].push(paths          ) if paths
     
@@ -37,9 +38,9 @@ private
         if item.respond_to?(:pop)
           case type
           when :javascripts
-            javascript_include_tag item
+            javascript_include_tag *item
           when :stylesheets
-            stylesheet_link_tag item
+            stylesheet_link_tag *item
           when :templates
             paths.collect { |path| template item[0], item[1], item[2] }.join "\n"
           end + "\n"
@@ -56,12 +57,11 @@ private
   end
 
   def remove_dups(arr, list=[])
-    arr.each do |a|
+    arr.dup.each do |a|
       if a.respond_to?(:pop)
         remove_dups a, list
-      elsif list.include?(a)
-        arr.delete a
       else
+        arr.delete(a) if list.include?(a)
         list << a
       end
     end

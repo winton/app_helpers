@@ -1,24 +1,22 @@
 module AppHelpers
   
-  def widget(*lineage)
-    options  = lineage.extract_options!
-    unless w = widget_instance(lineage)
-      w = Widget.new controller, logger, lineage, options
-      widget_instance lineage, w
+  def define_widget(*lineage)
+    w = Widget.new controller, logger, lineage, lineage.extract_options!
+    javascripts *(w.assets[:javascripts] + [ :cache => lineage.join('_') ]) do
+      w.render_init :js
     end
-    javascripts *w.assets[:javascripts] do
-      w.render_init(:js) unless options[:dependencies_only]
-    end
-    stylesheets *w.assets[:stylesheets]
+    stylesheets (*w.assets[:stylesheets] + [ :cache => lineage.join('_') ])
     templates *(w.assets[:templates].collect do |t|
       [ File.basename(t), t, w.options_for_render(w.options) ]
     end)
-    if options[:dependencies_only]
-      nil
-    elsif options[:include_js]
+  end
+  
+  def render_widget(*lineage)
+    w = Widget.new controller, logger, lineage, lineage.extract_options!
+    if w.options[:render_js]
       w.render_init(:partials) + "\n<script type='text/javascript'>\n#{w.render_init :js}\n</script>"
     else
-      w.render_init :partials
+      w.render_init(:partials)
     end
   end
   
@@ -120,7 +118,7 @@ module AppHelpers
       return if index >= @lineage.length
       from = to_path type, index
       from = File.directory?(from) ? "#{from}/*" : "#{from}.*"
-      Dir[from].each do |f|
+      Dir[from].sort.each do |f|
         @assets[type] << (type == :templates ? filename_to_partial(f, 'app/widgets/') : f)
       end
       update_asset_partials type, index+1
@@ -144,7 +142,7 @@ module AppHelpers
     end
     
     def update_directory(from, to, index, type)
-      Dir["#{from}/*"].collect do |f|
+      Dir["#{from}/*"].sort.collect do |f|
         next if f.include?('/init.js')
         t = to + f[from.length..-1]
         if File.directory?(f)
