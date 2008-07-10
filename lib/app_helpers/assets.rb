@@ -24,16 +24,34 @@ module AppHelpers
 private
 
   def add_assets(type, paths, &block)
+    options = paths.extract_options!
+    
     @assets ||= {}
     @assets[type] ||= []
+    @layout_assets ||= {}
+    @layout_assets[type] ||= []
     
     paths = nil if paths.empty?
     
-    @assets[type].push(capture(&block)) if block
-    @assets[type].push(paths          ) if paths
+    if options[:layout]
+      options.delete :layout
+      paths.push(options) if paths
+      @layout_assets[type].push(paths          ) if paths
+      @layout_assets[type].push(capture(&block)) if block
+    else
+      paths.push(options) if paths
+      @assets[type].unshift(paths          ) if paths
+      @assets[type].unshift(capture(&block)) if block
+    end
     
     if !paths && !block
-      remove_dups @assets[type].reverse!
+      logger.info 'LAYOUT'
+      logger.info @layout_assets[type].inspect
+      logger.info 'NON LAYOUT'
+      logger.info @assets[type]
+      
+      @assets[type] = @layout_assets[type] + @assets[type]
+      remove_dups @assets[type]
       @assets[type].collect do |item|
         if item.respond_to?(:pop)
           case type
@@ -57,12 +75,12 @@ private
   end
 
   def remove_dups(arr, list=[])
-    arr.dup.each do |a|
-      if a.respond_to?(:pop)
-        remove_dups a, list
+    arr.dup.each_index do |i|
+      if arr[i].respond_to?(:pop)
+        remove_dups arr[i], list
       else
-        arr.delete(a) if list.include?(a)
-        list << a
+        arr.delete_at(i) if list.include?(arr[i])
+        list << arr[i]
       end
     end
   end
