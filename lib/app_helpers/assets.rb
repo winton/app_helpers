@@ -44,14 +44,14 @@ private
       @assets[type].unshift(capture(&block)) if block
     end
     
-    if !paths && !block
-      logger.info 'LAYOUT'
-      logger.info @layout_assets[type].inspect
-      logger.info 'NON LAYOUT'
-      logger.info @assets[type]
-      
+    if !paths && !block      
       @assets[type] = @layout_assets[type] + @assets[type]
+      
+      @assets[type].uniq!
       remove_dups @assets[type]
+      @assets[type].collect! { |a| a[0].respond_to?(:keys) ? nil : a }
+      @assets[type].compact!
+      
       @assets[type].collect do |item|
         if item.respond_to?(:pop)
           case type
@@ -75,12 +75,17 @@ private
   end
 
   def remove_dups(arr, list=[])
-    arr.dup.each_index do |i|
-      if arr[i].respond_to?(:pop)
-        remove_dups arr[i], list
+    arr.dup.each do |a|
+      if a.respond_to?(:keys)
+        next
+      elsif a.respond_to?(:pop)
+        remove_dups a, list
       else
-        arr.delete_at(i) if list.include?(arr[i])
-        list << arr[i]
+        if list.include?(a) || a.blank?
+          arr.delete_at arr.rindex(a)
+        else
+          list << a
+        end
       end
     end
   end

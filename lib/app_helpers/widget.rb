@@ -3,25 +3,9 @@ module AppHelpers
   def require_widget(*lineage)
     @required_widget = true
     options = lineage.extract_options!
+    add_widget_assets [ '..' ], options, false
     lineage.each_index do |i|
-      line = lineage[0..i]
-      w  = widget_instance line
-      
-      if w
-        next if i < lineage.length - 1
-      else
-        w = Widget.new controller, logger, line, options
-        widget_instance line, w
-      end
-      w.options.merge! options
-      
-      javascripts *(w.assets[:javascripts] + [ :cache => line.join('_'), :layout => true ]) do
-        w.render_init(:js) if i < lineage.length - 1
-      end
-      stylesheets *(w.assets[:stylesheets] + [ :cache => line.join('_'), :layout => true ])
-      templates   *(w.assets[:templates].collect do |t|
-        [ File.basename(t), t, w.options_for_render(w.options) ]
-      end)
+      add_widget_assets lineage[0..i], options, i < lineage.length - 1
     end
   end
 
@@ -60,36 +44,67 @@ module AppHelpers
   
   private
   
+  def add_widget_assets(lineage, options, final_widget=false)
+    if w = widget_instance(lineage)
+      next if final_widget
+    else
+      w = Widget.new controller, logger, lineage, options
+      widget_instance lineage, w
+    end
+    w.options.merge! options
+    javascripts *(w.assets[:javascripts] + [ :cache => lineage.join('_'), :layout => true ]) do
+      w.render_init(:js) if final_widget
+    end
+    stylesheets *(w.assets[:stylesheets] + [ :cache => lineage.join('_'), :layout => true ])
+    templates   *(w.assets[:templates].collect do |t|
+      [ File.basename(t), t, w.options_for_render(w.options) ]
+    end)
+  end
+  
   def widget_instance(lineage, value=nil)
-    eval "@widget_#{lineage.join('_')}#{value ? " = value" : ''}"
+    @widgets ||= {}
+    @widgets[lineage.join('/')] = value ? @widgets[lineage.join('/')] : value
   end
   
   class Widget
-    attr :assets,     true
-    attr :lineage,    true
-    attr :logger,     true
-    attr :options,    true
-    attr :options_rb, true
+    attr :assets,         true
+    attr :lineage,        true
+    attr :logger,         true
+    attr :options,        true
+    attr :options_rb,     true
+    attr :implementation, true
     
-    def initialize(controller, logger, lineage, options={})
+    def initialize(controller, logger, lineage=[], options={})
       @controller = controller
       @logger  = logger
       @options = options
       @lineage = lineage
-      
-      return if lineage.empty?
       
       @options_rb = options_rb
       @assets = {
         :images => [], :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => []
       }
       
-      update_asset_partials :init_js
+      if File.exists?("app/widgets/implementations/#{lineage[0]}")
+        @implementation = @lineage.shift
+      end
+      
+      update_asset_partials :init_js      
       update_asset_partials :init_partials
       update_asset_partials :templates
       update_assets :images
       update_assets :javascripts
       update_assets :stylesheets
+      
+      if @implementation
+        update_asset_partials :init_js,       true
+        update_asset_partials :init_partials, true
+        update_asset_partials :templates,     true
+        update_assets :images,      true
+        update_assets :javascripts, true
+        update_assets :stylesheets, true
+        remove_implementation_dups
+      end
     end
     
     def options_for_render(merge_with={})
@@ -103,10 +118,10 @@ module AppHelpers
       end.join("\n")
     end
     
-    def to_path(type, index=@lineage.length-1)
+    def to_path(type, implementation=false, index=@lineage.length-1)
       lineage = @lineage[0..index]
       asset   = lineage.join('/')
-      base    = 'app/widgets/' + lineage.join('/widgets/')
+      base    = "app/widgets/#{implementation ? "implementations/#{@implementation}/" : 'widgets/'}" + lineage.join('/widgets/')
       case type
       when :base:          base
       when :asset:         asset
@@ -125,7 +140,7 @@ module AppHelpers
     def filename_to_partial(f, remove=nil)
       base = File.basename f
       dir  = File.dirname f
-      f    = [ dir, (base[0..0] == '_' ? base[1..-1] : base ).split('.')[0] ].join '/'
+      f    = [ dir, (base[0..0] == '_' ? base[1..-1] : base ).split('.')[0..-2].join('.') ].join '/'
       if remove
         if remove.respond_to?(:pop)
           remove.each { |r| f.gsub! r, '' }
@@ -136,27 +151,37 @@ module AppHelpers
       f
     end
     
-    def update_asset_partials(type)
-      from = to_path type
+    def needs_update?(from, to)
+      File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
+    end
+    
+    def options_rb(index=0, options={})
+      return options if index >= @lineage.length
+      path = to_path :options, false, index
+      options.merge!(eval(File.read(path))) if File.exists?(path)
+      options_rb index + 1, options
+    end
+    
+    def remove_implementation_dups
+      @assets.each do |key, value|
+        value.dup.each do |v|
+          if v.include?("/implementations/#{@implementation}/")
+            value.delete v.gsub("/implementations/#{@implementation}", '/widgets')
+          end
+        end
+      end
+    end
+    
+    def update_asset_partials(type, implementation=false)
+      from = to_path type, implementation
       from = File.directory?(from) ? "#{from}/*" : "#{from}.*"
       Dir[from].sort.each do |f|
         @assets[type] << (type == :templates ? filename_to_partial(f, 'app/widgets/') : f)
       end
     end
     
-    def options_rb(index=0, options={})
-      return options if index >= @lineage.length
-      path = to_path :options, index
-      options.merge!(eval(File.read(path))) if File.exists?(path)
-      options_rb index + 1, options
-    end
-    
-    def needs_update?(from, to)
-      File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
-    end
-    
-    def update_assets(type)
-      @assets[type] += update_directory(*(to_path(type) + [ type ]))
+    def update_assets(type, implementation=false)
+      @assets[type] += update_directory(*(to_path(type, implementation) + [ type ]))
     end
     
     def update_directory(from, to, type)
