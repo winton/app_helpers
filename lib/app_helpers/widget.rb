@@ -29,7 +29,7 @@ module AppHelpers
   def widget_image(*lineage)
     options = lineage.extract_options!
     image   = lineage.pop
-    image_tag "#{lineage.join('_')}/#{image}", options
+    image_tag "widgets/#{lineage.join('/')}/#{image}", options
   end
   
   def widget_partial(*lineage)
@@ -39,7 +39,7 @@ module AppHelpers
       options[:locals] ||= {}
       options[:locals].merge! w.options_for_render
     end
-    render options.merge(:partial => "#{lineage.join('/widgets/')}/partials/#{partial}")
+    render options.merge(:partial => "widgets/#{lineage.join('/widgets/')}/partials/#{partial}")
   end
   
   private
