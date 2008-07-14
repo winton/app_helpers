@@ -1,9 +1,9 @@
 module AppHelpers
   
   def require_widget(*lineage)
-    @required_widget = true
     options = lineage.extract_options!
-    add_widget_assets [ '..' ], options, false
+    add_widget_assets([ '..' ], options, false) unless @required_widget
+    @required_widget = true
     lineage.each_index do |i|
       add_widget_assets lineage[0..i], options, i < lineage.length - 1
     end
@@ -52,10 +52,11 @@ module AppHelpers
       widget_instance lineage, w
     end
     w.options.merge! options
-    javascripts *(w.assets[:javascripts] + [ :cache => lineage.join('_'), :layout => true ]) do
+    cache = lineage[0] == '..' ? 'dependencies' : lineage.join('_')
+    javascripts *(w.assets[:javascripts] + [ :cache => cache, :layout => true ]) do
       w.render_init(:js) if final_widget
     end
-    stylesheets *(w.assets[:stylesheets] + [ :cache => lineage.join('_'), :layout => true ])
+    stylesheets *(w.assets[:stylesheets] + [ :cache => cache, :layout => true ])
     templates   *(w.assets[:templates].collect do |t|
       [ File.basename(t), t, w.options_for_render(w.options) ]
     end)
@@ -77,8 +78,8 @@ module AppHelpers
     def initialize(controller, logger, lineage=[], options={})
       @controller = controller
       @logger  = logger
-      @options = options
-      @lineage = lineage
+      @options = options.dup
+      @lineage = lineage.dup
       
       @options_rb = options_rb
       @assets = {
