@@ -28,8 +28,12 @@ module AppHelpers
   
   def widget_image(*lineage)
     options = lineage.extract_options!
-    image   = lineage.pop
-    image_tag "widgets/#{lineage.join('/')}/#{image}", options
+    image_tag widget_image_path(*lineage), options
+  end
+  
+  def widget_image_path(*lineage)
+    image = lineage.pop
+    "widgets/#{lineage.join('/')}/#{image}"
   end
   
   def widget_partial(*lineage)
@@ -110,7 +114,10 @@ module AppHelpers
     
     def options_for_render(merge_with={})
       opts = @options_rb.merge merge_with
-      opts.merge(:options => opts)
+      opts.merge(
+        :instance => ([ @implementation ] + @lineage).compact.join('_'),
+        :options  => opts
+      )
     end
     
     def render_init(type)
@@ -122,7 +129,7 @@ module AppHelpers
     def to_path(type, implementation=false, index=@lineage.length-1)
       lineage = @lineage[0..index]
       asset   = lineage.join('/')
-      base    = "app/widgets/#{implementation ? "implementations/#{@implementation}/" : 'widgets/'}" + lineage.join('/widgets/')
+      base    = "app/widgets/#{implementation ? "#{@implementation}" : 'widgets'}/" + lineage.join('/widgets/')
       case type
       when :base:          base
       when :asset:         asset
