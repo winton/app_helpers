@@ -25,6 +25,7 @@ private
 
   def add_assets(type, paths, &block)
     options = paths.extract_options!
+    paths.flatten!
     
     @assets ||= {}
     @assets[type] ||= []

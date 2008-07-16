@@ -1,8 +1,8 @@
 module AppHelpers
   
   def require_widget(*lineage)
-    options = lineage.extract_options!
-    add_widget_assets([ '..' ], options, false) unless @required_widget
+    options = lineage.extract_options!    
+    add_widget_assets [ '..' ], options, true
     @required_widget = true
     lineage.each_index do |i|
       add_widget_assets lineage[0..i], options, i < lineage.length - 1
@@ -15,7 +15,7 @@ module AppHelpers
       w = Widget.new controller, logger, lineage, options
       widget_instance lineage, w
     end
-    w.options.merge! options
+    w.options.merge! options    
     if w.options[:include_js]
       w.render_init(:partials) + "\n<script type='text/javascript'>\n#{w.render_init :js}\n</script>"
     else
