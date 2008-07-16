@@ -72,6 +72,8 @@ module AppHelpers
   end
   
   class Widget
+    DEBUG = false
+    
     attr :assets,         true
     attr :lineage,        true
     attr :logger,         true
@@ -85,14 +87,15 @@ module AppHelpers
       @options = options.dup
       @lineage = lineage.dup
       
+      if @lineage[0] != '..' && File.exists?("app/widgets/#{lineage[0]}")
+        @implementation = @lineage.shift
+      end
+      
       @options_rb = options_rb
+      @options_rb.merge!(options_rb(true)) if @implementation
       @assets = {
         :images => [], :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => []
       }
-      
-      if File.exists?("app/widgets/implementations/#{lineage[0]}")
-        @implementation = @lineage.shift
-      end
       
       update_asset_partials :init_js      
       update_asset_partials :init_partials
@@ -109,6 +112,14 @@ module AppHelpers
         update_assets :javascripts, true
         update_assets :stylesheets, true
         remove_implementation_dups
+      end
+      
+      if DEBUG
+        logger.info '='*20
+        logger.info 'LINEAGE: ' + lineage.inspect
+        logger.info 'OPTIONS: ' + options.inspect
+        logger.info 'OPTIONS_RB: ' + @options_rb.inspect
+        logger.info 'ASSETS: ' + @assets.inspect
       end
     end
     
@@ -163,11 +174,11 @@ module AppHelpers
       File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
     end
     
-    def options_rb(index=0, options={})
+    def options_rb(implementation=false, index=0, options={})
       return options if index >= @lineage.length
-      path = to_path :options, false, index
+      path = to_path :options, implementation, index
       options.merge!(eval(File.read(path))) if File.exists?(path)
-      options_rb index + 1, options
+      options_rb implementation, index + 1, options
     end
     
     def remove_implementation_dups
