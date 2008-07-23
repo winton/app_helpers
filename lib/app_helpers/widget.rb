@@ -1,8 +1,7 @@
 module AppHelpers
   
   def require_widget(*lineage)
-    options = lineage.extract_options!    
-    add_widget_assets [ '..' ], options, true
+    options = lineage.extract_options!
     @required_widget = true
     lineage.each_index do |i|
       add_widget_assets lineage[0..i], options, i < lineage.length - 1
@@ -72,7 +71,7 @@ module AppHelpers
   end
   
   class Widget
-    DEBUG = false
+    DEBUG = true
     
     attr :assets,         true
     attr :lineage,        true
@@ -86,13 +85,18 @@ module AppHelpers
       @logger  = logger
       @options = options.dup
       @lineage = lineage.dup
+      @implementation = []
       
-      if @lineage[0] != '..' && File.exists?("app/widgets/#{lineage[0]}")
-        @implementation = @lineage.shift
-      end
+      @lineage.dup.each do |imp|
+        if File.exists?("app/widgets/#{(@implementation + [imp]).join('/')}")
+          @implementation << @lineage.shift
+        else
+          break
+        end
+      end if lineage.first != '..'
       
       @options_rb = options_rb
-      @options_rb.merge!(options_rb(true)) if @implementation
+      @options_rb.merge!(options_rb(true)) unless @implementation.empty?
       @assets = {
         :images => [], :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => []
       }
@@ -104,31 +108,29 @@ module AppHelpers
       update_assets :javascripts
       update_assets :stylesheets
       
-      if @implementation
+      unless @implementation.empty?
         update_asset_partials :init_js,       true
         update_asset_partials :init_partials, true
         update_asset_partials :templates,     true
         update_assets :images,      true
         update_assets :javascripts, true
         update_assets :stylesheets, true
-        remove_implementation_dups
+        #remove_implementation_dups
       end
       
       if DEBUG
         logger.info '='*20
-        logger.info 'LINEAGE: ' + lineage.inspect
-        logger.info 'OPTIONS: ' + options.inspect
+        logger.info 'LINEAGE: ' + @lineage.inspect
+        logger.info 'OPTIONS: ' + @options.inspect
         logger.info 'OPTIONS_RB: ' + @options_rb.inspect
         logger.info 'ASSETS: ' + @assets.inspect
+        logger.info 'IMPLEMENTATION: ' + @implementation.inspect
       end
     end
     
     def options_for_render(merge_with={})
       opts = @options_rb.merge merge_with
-      opts.merge(
-        :instance => ([ @implementation ] + @lineage).compact.join('_'),
-        :options  => opts
-      )
+      opts.merge(:options => opts)
     end
     
     def render_init(type)
@@ -139,8 +141,14 @@ module AppHelpers
     
     def to_path(type, implementation=false, index=@lineage.length-1)
       lineage = @lineage[0..index]
-      asset   = lineage.join('/')
-      base    = "app/widgets/#{implementation ? "#{@implementation}" : 'widgets'}/" + lineage.join('/widgets/')
+      asset   = lineage.join '/'
+      base    = []
+      base   << "app/widgets"
+      base   << "#{@implementation.join('/')}"        if implementation
+      base   << 'widgets/' + lineage.join('/widgets/') unless lineage.empty?
+      base    = base.join '/'
+      logger.info implementation.inspect
+      logger.info base.inspect
       case type
       when :base:          base
       when :asset:         asset
