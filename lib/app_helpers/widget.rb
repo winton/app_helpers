@@ -1,238 +1,216 @@
 module AppHelpers
   
-  def require_widget(*lineage)
-    options = lineage.extract_options!
+  def render_widget(*path)
+    widgets, options = widget_instances path
+    widgets.collect do |w|
+      if options[:include_js]
+        w.render_init(:partials, options) + "\n<script type='text/javascript'>\n#{w.render_init :js, options}\n</script>"
+      else
+        javascripts *(@required_widget ? [ :layout => true ] : []) do
+          w.render_init :js, options
+        end
+        w.render_init :partials, options
+      end
+    end
+  end
+  
+  def require_widget(*path)
+    widgets, options = widget_instances path
+    widgets.each do |w|
+      w.copy_assets
+      javascripts *(w.helper_targets(:javascripts) + [ :cache => w.cache, :layout => true ]) do
+        w.render_init(:js) if w != widgets.last
+      end
+      stylesheets *(w.helper_targets(:stylesheets) + [ :cache => w.cache, :layout => true ])
+      templates   *(w.assets[:templates].collect do |t|
+        [ File.basename(t), t, options.merge(:options => options) ]
+      end)
+    end
     @required_widget = true
-    lineage.each_index do |i|
-      add_widget_assets lineage[0..i], options, i < lineage.length - 1
-    end
-  end
-
-  def render_widget(*lineage)
-    options  = lineage.extract_options!
-    unless w = widget_instance(lineage)
-      w = Widget.new controller, logger, lineage, options
-      widget_instance lineage, w
-    end
-    w.options.merge! options    
-    if w.options[:include_js]
-      w.render_init(:partials) + "\n<script type='text/javascript'>\n#{w.render_init :js}\n</script>"
-    else
-      javascripts *(@required_widget ? [ :layout => true ] : []) do
-        w.render_init :js
-      end
-      w.render_init :partials
-    end
   end
   
-  def widget_image(*lineage)
-    options = lineage.extract_options!
-    image_tag widget_image_path(*lineage), options
+  def widget_image(*path)
+    options = path.extract_options!
+    image_tag widget_image_path(*path), options
   end
   
-  def widget_image_path(*lineage)
-    image = lineage.pop
-    "widgets/#{lineage.join('/')}/#{image}"
+  def widget_image_path(*path)
+    image = path.pop
+    "widgets/#{path.join('/')}/#{image}"
   end
   
-  def widget_partial(*lineage)
-    options = lineage.extract_options!
-    partial = lineage.pop
-    if w = widget_instance(lineage)
-      options[:locals] ||= {}
-      options[:locals].merge! w.options_for_render
-    end
-    render options.merge(:partial => "widgets/#{lineage.join('/widgets/')}/partials/#{partial}")
+  def widget_partial(*path)
+    options = path.extract_options!
+    partial = path.pop
+    path << options
+    widgets, options = widget_instances path
+    options = {
+      :locals  => options.merge(:options => options),
+      :partial => "#{path.join('/')}/partials/#{partial}"
+    }
+    render options
   end
   
-  private
-  
-  def add_widget_assets(lineage, options, final_widget=false)
-    if w = widget_instance(lineage)
-      next if final_widget
-    else
-      w = Widget.new controller, logger, lineage, options
-      widget_instance lineage, w
-    end
-    w.options.merge! options
-    cache = lineage[0] == '..' ? 'dependencies' : lineage.join('_')
-    javascripts *(w.assets[:javascripts] + [ :cache => cache, :layout => true ]) do
-      w.render_init(:js) if final_widget
-    end
-    stylesheets *(w.assets[:stylesheets] + [ :cache => cache, :layout => true ])
-    templates   *(w.assets[:templates].collect do |t|
-      [ File.basename(t), t, w.options_for_render(w.options) ]
-    end)
+  def widget_instances(path)
+    @widgets ||= Widgets.new controller, logger
+    options = path.extract_options!
+    widgets = @widgets.build path, options
+    [ widgets, options ]
   end
   
-  def widget_instance(lineage, value=nil)
-    @widgets ||= {}
-    @widgets[lineage.join('/')] = value ? @widgets[lineage.join('/')] : value
-  end
-  
-  class Widget
-    DEBUG = true
+  class Widgets
+    attr :paths,   true
+    attr :widgets, true
     
-    attr :assets,         true
-    attr :lineage,        true
-    attr :logger,         true
-    attr :options,        true
-    attr :options_rb,     true
-    attr :implementation, true
-    
-    def initialize(controller, logger, lineage=[], options={})
+    def initialize(controller, logger)
       @controller = controller
-      @logger  = logger
-      @options = options.dup
-      @lineage = lineage.dup
-      @implementation = []
-      
-      @lineage.dup.each do |imp|
-        if File.exists?("app/widgets/#{(@implementation + [imp]).join('/')}")
-          @implementation << @lineage.shift
-        else
-          break
-        end
-      end if lineage.first != '..'
-      
-      @options_rb = options_rb
-      @options_rb.merge!(options_rb(true)) unless @implementation.empty?
-      @assets = {
-        :images => [], :javascripts => [], :stylesheets => [], :templates => [], :init_js => [], :init_partials => []
-      }
-      
-      update_asset_partials :init_js      
-      update_asset_partials :init_partials
-      update_asset_partials :templates
-      update_assets :images
-      update_assets :javascripts
-      update_assets :stylesheets
-      
-      unless @implementation.empty?
-        update_asset_partials :init_js,       true
-        update_asset_partials :init_partials, true
-        update_asset_partials :templates,     true
-        update_assets :images,      true
-        update_assets :javascripts, true
-        update_assets :stylesheets, true
-        #remove_implementation_dups
-      end
-      
-      if DEBUG
-        logger.info '='*20
-        logger.info 'LINEAGE: ' + @lineage.inspect
-        logger.info 'OPTIONS: ' + @options.inspect
-        logger.info 'OPTIONS_RB: ' + @options_rb.inspect
-        logger.info 'ASSETS: ' + @assets.inspect
-        logger.info 'IMPLEMENTATION: ' + @implementation.inspect
+      @logger     = logger
+      @widgets    = {}
+    end
+    
+    def build(path, options)
+      related_paths(path).collect do |r|
+        @widgets[r] ||= Assets.new r, @controller, @logger
+        options.merge! @widgets[r].options
+        @widgets[r]
       end
     end
     
-    def options_for_render(merge_with={})
-      opts = @options_rb.merge merge_with
-      opts.merge(:options => opts)
-    end
+    private
     
-    def render_init(type)
-      @assets["init_#{type}".intern].collect do |f|
-        @controller.render_to_string :file => f, :locals => options_for_render(@options)
-      end.join("\n")
-    end
-    
-    def to_path(type, implementation=false, index=@lineage.length-1)
-      lineage = @lineage[0..index]
-      asset   = lineage.join '/'
-      base    = []
-      base   << "app/widgets"
-      base   << "#{@implementation.join('/')}"        if implementation
-      base   << 'widgets/' + lineage.join('/widgets/') unless lineage.empty?
-      base    = base.join '/'
-      logger.info implementation.inspect
-      logger.info base.inspect
-      case type
-      when :base:          base
-      when :asset:         asset
-      when :options:       base + '/options.rb'
-      when :init_js:       base + '/javascripts/init'
-      when :init_partials: base + '/partials/_init'
-      when :templates:     base + '/templates'
-      when :images:      [ base + '/images',      'public/images/widgets/'      + asset ]
-      when :javascripts: [ base + '/javascripts', 'public/javascripts/widgets/' + asset ]
-      when :stylesheets: [ base + '/stylesheets', 'public/stylesheets/widgets/' + asset ]
-      end
-    end
-    
-  private
-  
-    def filename_to_partial(f, remove=nil)
-      base = File.basename f
-      dir  = File.dirname f
-      f    = [ dir, (base[0..0] == '_' ? base[1..-1] : base ).split('.')[0..-2].join('.') ].join '/'
-      if remove
-        if remove.respond_to?(:pop)
-          remove.each { |r| f.gsub! r, '' }
-        else
-          f.gsub! remove, ''
+    def related_paths(paths)
+      last = paths.length - 1
+      ordered = []
+      last.step(0, -1) do |x|
+        path = paths[x..last].join '/'
+        if File.exists?("app/widgets/#{path}")
+          ordered << path
         end
       end
-      f
+      ordered
     end
     
-    def needs_update?(from, to)
-      File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
-    end
-    
-    def options_rb(implementation=false, index=0, options={})
-      return options if index >= @lineage.length
-      path = to_path :options, implementation, index
-      options.merge!(eval(File.read(path))) if File.exists?(path)
-      options_rb implementation, index + 1, options
-    end
-    
-    def remove_implementation_dups
-      @assets.each do |key, value|
-        value.dup.each do |v|
-          if v.include?("/implementations/#{@implementation}/")
-            value.delete v.gsub("/implementations/#{@implementation}", '/widgets')
-          end
+    class Assets
+      attr :assets,  true
+      attr :cache,   true
+      attr :options, true
+      attr :path,    true
+      
+      ASSET_TYPES = [ :images, :javascripts, :stylesheets, :templates, :init_js, :init_partials ]
+      
+      def initialize(path, controller, logger)
+        @controller = controller
+        @logger  = logger
+        @assets  = {}
+        @options = {}
+        @path    = path
+        @cache   = cache_name
+        update_options
+        ASSET_TYPES.each do |type|
+          update_asset type
         end
       end
-    end
-    
-    def update_asset_partials(type, implementation=false)
-      from = to_path type, implementation
-      from = File.directory?(from) ? "#{from}/*" : "#{from}.*"
-      Dir[from].sort.each do |f|
-        @assets[type] << (type == :templates ? filename_to_partial(f, 'app/widgets/') : f)
-      end
-    end
-    
-    def update_assets(type, implementation=false)
-      @assets[type] += update_directory(*(to_path(type, implementation) + [ type ]))
-    end
-    
-    def update_directory(from, to, type)
-      Dir["#{from}/*"].sort.collect do |f|
-        next if f.include?('/init.js')
-        t = to + f[from.length..-1]
-        if File.directory?(f)
-          update_directory f, t, type
-        else
-          t.gsub!('/widgets/', '/sass/widgets/') if f.include?('.sass')
-          if to && needs_update?(f, t)
-            FileUtils.mkdir_p File.dirname(t)
-            if type == :images
+      
+      def copy_assets
+        @assets.each do |key, value|
+          from, to = to_path key
+          value.each do |asset|
+            base = File.basename asset
+            f = [ from, base ].join '/'
+            t = [ to,   base ].join '/'
+            case key
+            when :images
+              FileUtils.mkdir_p to
               FileUtils.copy f, t
-            else
+            when :javascripts, :stylesheets
+              t.gsub!('/stylesheets/', '/stylesheets/sass/') if t.include?('.sass')
+              FileUtils.mkdir_p File.dirname(t)
               File.open t, 'w' do |file|
-                file.write @controller.render_to_string(:file => f, :locals => options_for_render)
+                file.write @controller.render_to_string(:file => f, :locals => @options.merge(:options => @options))
               end
             end
           end
-          filename_to_partial t, [ "public/#{type}/", 'sass/' ]
         end
-      end.compact.flatten
+      end
+      
+      def helper_targets(type)
+        from, to = to_path type
+        case type
+        when :javascripts
+          @assets[type].collect do |asset|
+            [ to.split('javascripts/')[1], File.basename(asset, '.js') ].join '/'
+          end
+        when :stylesheets
+          @assets[type].collect do |asset|
+            sass = asset.include? '.sass'
+            [ to.split('stylesheets/')[1], File.basename(asset, sass ? '.sass' : '.css') ].join '/'
+          end
+        else @assets[type]
+        end
+      end
+      
+      def render_init(type, options=@options)
+        @assets["init_#{type}".intern].collect do |f|
+          @controller.render_to_string :file => f, :locals => options.merge(:options => options)
+        end.join("\n")
+      end
+      
+      private
+      
+      def cache_name
+        @path.empty? ? 'base' : @path.gsub('/', '_')
+      end
+      
+      def filename_to_partial(file, remove=nil)
+        base = File.basename file
+        dir  = File.dirname file
+        file = [ dir, (base[0..0] == '_' ? base[1..-1] : base ).split('.')[0..-2].join('.') ].join '/'
+        if remove
+          if remove.respond_to?(:pop)
+            remove.each { |r| file.gsub! r, '' }
+          else
+            file.gsub! remove, ''
+          end
+        end
+        file
+      end
+
+      def needs_update?(from, to)
+        File.exists?(to) ? File.mtime(from) > File.mtime(to) : true
+      end
+      
+      def to_path(type, path=@path)
+        base = "app/widgets#{path.empty? ? '' : '/'}#{path}"
+        case type
+        when :base:          base
+        when :init_js:       base + '/javascripts/init'
+        when :init_partials: base + '/partials/_init'
+        when :options:       base + '/options.rb'
+        when :templates:     base + '/templates'
+        when :images:      [ base + '/images',      'public/images/widgets/'      + path ]
+        when :javascripts: [ base + '/javascripts', 'public/javascripts/widgets/' + path ]
+        when :stylesheets: [ base + '/stylesheets', 'public/stylesheets/widgets/' + path ]
+        end
+      end
+      
+      def update_asset(type)
+        @assets[type] ||= []
+        from = to_path type
+        from = from[0] if from.respond_to?(:pop)
+        from = File.directory?(from) ? "#{from}/*" : "#{from}.*"
+        Dir[from].sort.each do |f|
+          next if type == :javascripts && File.basename(f) == 'init.js'
+          @assets[type] << (type == :templates ? filename_to_partial(f, 'app/widgets/') : f)
+        end
+      end
+      
+      def update_options(path=@path, empty=false)
+        options  = to_path :options, path
+        @options = (File.exists?(options) ? eval(File.read(options)) : {}).merge(@options)
+        path = path.split('/')[0..-2]
+        # empty allows us to retrieve
+        update_options(path.join('/'), path.empty?) unless empty
+      end
     end
   end
-  
 end
