@@ -161,7 +161,7 @@ module AppHelpers
       private
       
       def cache_name
-        @path.empty? ? 'base' : @path.gsub('/', '_')
+        'cache/' + (@path.empty? ? 'base' : @path.gsub('/', '_'))
       end
       
       def filename_to_partial(file, remove=nil)

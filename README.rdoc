@@ -91,21 +91,6 @@ Example:
     Two local variables will be sent to the partial; 'x' (0) and 'body' (this text).
 
 
-== MooTools
-
-=== <tt>mootools</tt>
-
-The javascript path to the MooTools library. In development mode, returns <tt>stutools/assets/moo</tt>. In production, returns <tt>moo</tt>.
-
-=== <tt>stutools</tt>
-
-The javascript path to the StuTools library. In development mode, returns an array of paths (<tt>stutools/*.js</tt>). In production, returns <tt>stu</tt>.
-
-*Note*: Commonly both are included with
-
-  = javascript_include_tag *(mootools + stutools + [ :cache => true ])
-
-
 == Rake Tasks
 
 === <tt>rake app_helpers</tt>
@@ -193,7 +178,7 @@ Truncates without cutting words in half.
 
 Groups js, css, templates, and partials around a particular UI element.
 
-The directory structure allows for widgets to be built on top of each other (versioned).
+Given the following directory structure:
 
   app/
     widgets/
@@ -202,14 +187,9 @@ The directory structure allows for widgets to be built on top of each other (ver
           { option: true, option2: false }
         javascripts/
           init.js
-        partials/
-          _init.haml
-        stylesheets/
-        templates/
-        widgets/
-          widget_name_v2/
-            options.rb
-            ...and so on
+        widget_name_v2/
+          options.rb
+          ...and so on
 
 Example:
 
