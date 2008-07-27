@@ -3,13 +3,15 @@ module AppHelpers
   def render_widget(*path)
     widgets, options = widget_instances path
     widgets.collect do |w|
+      # we want widgets rendered from the partial to include first
+      partial = w.render_init :partials, options
       if options[:include_js]
-        w.render_init(:partials, options) + "\n<script type='text/javascript'>\n#{w.render_init :js, options}\n</script>"
+        partial + "\n<script type='text/javascript'>\n#{w.render_init :js, options}\n</script>"
       else
         javascripts *(@required_widget ? [ :layout => true ] : []) do
           w.render_init :js, options
         end
-        w.render_init :partials, options
+        partial
       end
     end
   end
@@ -18,9 +20,7 @@ module AppHelpers
     widgets, options = widget_instances path
     widgets.each do |w|
       w.copy_assets
-      javascripts *(w.helper_targets(:javascripts) + [ :cache => w.cache, :layout => true ]) do
-        w.render_init(:js) if w != widgets.last
-      end
+      javascripts *(w.helper_targets(:javascripts) + [ :cache => w.cache, :layout => true ])
       stylesheets *(w.helper_targets(:stylesheets) + [ :cache => w.cache, :layout => true ])
       templates   *(w.assets[:templates].collect do |t|
         [ File.basename(t), t, options.merge(:options => options) ]
@@ -54,12 +54,10 @@ module AppHelpers
   def widget_instances(path)
     @widgets ||= Widgets.new controller, logger
     options = path.extract_options!
-    widgets = @widgets.build path, options
-    [ widgets, options ]
+    @widgets.build path, options
   end
   
   class Widgets
-    attr :paths,   true
     attr :widgets, true
     
     def initialize(controller, logger)
@@ -69,11 +67,13 @@ module AppHelpers
     end
     
     def build(path, options)
-      related_paths(path).collect do |r|
+      opts = {}
+      widgets = related_paths(path).collect do |r|
         @widgets[r] ||= Assets.new r, @controller, @logger
-        options.merge! @widgets[r].options
+        opts.merge! @widgets[r].options
         @widgets[r]
       end
+      [ widgets, opts.merge(options) ]
     end
     
     private
@@ -81,11 +81,14 @@ module AppHelpers
     def related_paths(paths)
       last = paths.length - 1
       ordered = []
-      last.step(0, -1) do |x|
+      last.step(1, -1) do |x|
         path = paths[x..last].join '/'
         if File.exists?("app/widgets/#{path}")
           ordered << path
         end
+      end
+      (0..last).each do |x|
+        ordered << paths[0..x].join('/')
       end
       ordered
     end
@@ -180,16 +183,17 @@ module AppHelpers
       end
       
       def to_path(type, path=@path)
-        base = "app/widgets#{path.empty? ? '' : '/'}#{path}"
+        slash = path.empty? ? '' : '/'
+        base  = "app/widgets#{slash}#{path}"
         case type
         when :base:          base
         when :init_js:       base + '/javascripts/init'
         when :init_partials: base + '/partials/_init'
         when :options:       base + '/options.rb'
         when :templates:     base + '/templates'
-        when :images:      [ base + '/images',      'public/images/widgets/'      + path ]
-        when :javascripts: [ base + '/javascripts', 'public/javascripts/widgets/' + path ]
-        when :stylesheets: [ base + '/stylesheets', 'public/stylesheets/widgets/' + path ]
+        when :images:      [ base + '/images',      "public/images/widgets"      + slash + path ]
+        when :javascripts: [ base + '/javascripts', "public/javascripts/widgets" + slash + path ]
+        when :stylesheets: [ base + '/stylesheets', "public/stylesheets/widgets" + slash + path ]
         end
       end
       
