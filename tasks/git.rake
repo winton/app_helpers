@@ -13,6 +13,7 @@ namespace :git do
     desc 'Initiates git pull on all submodules'
     task :pull do
       Dir["vendor/plugins/*/.git", "config/*/.git", "app/widgets/*/.git"].collect do |f|
+        puts f
         system "cd #{File.dirname(f)}; git checkout master; git pull"
       end
     end
