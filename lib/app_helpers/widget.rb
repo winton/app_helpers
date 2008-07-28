@@ -1,15 +1,20 @@
 module AppHelpers
   
   def render_widget(*path)
+    unless @rendered_widget
+      @rendered_widget = true
+      render_widget('')
+    end
     widgets, options = widget_instances path
     widgets.collect do |w|
       # we want widgets rendered from the partial to include first
       partial = w.render_init :partials, options
-      if options[:include_js]
-        partial + "\n<script type='text/javascript'>\n#{w.render_init :js, options}\n</script>"
+      js = w.render_init :js, options
+      if options[:include_js] && !js.empty?
+        partial + "\n<script type='text/javascript'>\n#{js}\n</script>"
       else
         javascripts *(@required_widget ? [ :layout => true ] : []) do
-          w.render_init :js, options
+          js
         end
         partial
       end
@@ -17,6 +22,10 @@ module AppHelpers
   end
   
   def require_widget(*path)
+    unless @required_widget
+      @required_widget = true
+      require_widget('')
+    end
     widgets, options = widget_instances path
     widgets.each do |w|
       w.copy_assets
@@ -26,7 +35,6 @@ module AppHelpers
         [ File.basename(t), t, options.merge(:options => options) ]
       end)
     end
-    @required_widget = true
   end
   
   def widget_image(*path)
@@ -52,7 +60,7 @@ module AppHelpers
   end
   
   def widget_instances(path)
-    @widgets ||= Widgets.new controller, logger
+    @widgets ||= Widgets.new binding, controller, logger
     options = path.extract_options!
     @widgets.build path, options
   end
@@ -60,7 +68,8 @@ module AppHelpers
   class Widgets
     attr :widgets, true
     
-    def initialize(controller, logger)
+    def initialize(bind, controller, logger)
+      @bind       = bind
       @controller = controller
       @logger     = logger
       @widgets    = {}
@@ -69,7 +78,7 @@ module AppHelpers
     def build(path, options)
       opts = {}
       widgets = related_paths(path).collect do |r|
-        @widgets[r] ||= Assets.new r, @controller, @logger
+        @widgets[r] ||= Assets.new r, @bind, @controller, @logger
         opts.merge! @widgets[r].options
         @widgets[r]
       end
@@ -101,7 +110,8 @@ module AppHelpers
       
       ASSET_TYPES = [ :images, :javascripts, :stylesheets, :templates, :init_js, :init_partials ]
       
-      def initialize(path, controller, logger)
+      def initialize(path, bind, controller, logger)
+        @bind    = bind
         @controller = controller
         @logger  = logger
         @assets  = {}
@@ -121,12 +131,13 @@ module AppHelpers
             base = File.basename asset
             f = [ from, base ].join '/'
             t = [ to,   base ].join '/'
+            t.gsub!('/stylesheets/', '/stylesheets/sass/') if t.include?('.sass')
+            next unless needs_update?(f, t)
             case key
             when :images
               FileUtils.mkdir_p to
               FileUtils.copy f, t
             when :javascripts, :stylesheets
-              t.gsub!('/stylesheets/', '/stylesheets/sass/') if t.include?('.sass')
               FileUtils.mkdir_p File.dirname(t)
               File.open t, 'w' do |file|
                 file.write @controller.render_to_string(:file => f, :locals => @options.merge(:options => @options))
@@ -210,9 +221,9 @@ module AppHelpers
       
       def update_options(path=@path, empty=false)
         options  = to_path :options, path
-        @options = (File.exists?(options) ? eval(File.read(options)) : {}).merge(@options)
+        @options = (File.exists?(options) ? eval(File.read(options), @bind) : {}).merge(@options)
         path = path.split('/')[0..-2]
-        # empty allows us to retrieve
+        # empty allows us to retrieve base directory's options
         update_options(path.join('/'), path.empty?) unless empty
       end
     end
