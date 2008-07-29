@@ -5,4 +5,8 @@ module AppHelpers
     concat(render(:partial => partial_name, :locals => options), block ? block.binding : nil)
   end
   
+  def script_tag_redirect_to(url)
+    render :partial => 'app_helpers/script_tag', :locals => { :body => "window.location = '#{url}';" }
+  end
+  
 end

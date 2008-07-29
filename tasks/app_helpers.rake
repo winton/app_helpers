@@ -1,20 +1,21 @@
 desc 'Updates views/shared for all resources'
-task :app_helpers => [ 'app_helpers:tbl', 'app_helpers:template' ]
+task :app_helpers => [ 'app_helpers:views' ]
 
-namespace :app_helpers do  
-  desc 'Updates views/app_helpers/tbl'
-  task :tbl do
-    helper_resource :views, :tbl, 'app/views'
+namespace :app_helpers do
+  desc 'Updates views/app_helpers'
+  task :views do
+    app_helper_resource :views, 'app/views'
   end
   
-  desc 'Updates views/app_helpers/template'
-  task :template do
-    helper_resource :views, :template, 'app/views'
+  desc 'Updates plugin resources from app'
+  task :to_plugin do
+    app_helper_resource :views, 'app/views', true
   end
-  
-  def helper_resource(type, helper, location)
-    from = "#{File.dirname(__FILE__)}/../resources/#{type}/#{helper}"
-    to   = location + "/app_helpers/#{helper}"
+    
+  def app_helper_resource(type, location, reverse=false)
+    from = "#{File.dirname(__FILE__)}/../resources/#{type}"
+    to   = location + '/app_helpers'
+    from, to = to, from if reverse
     puts "=> Removing old #{type}..."
     FileUtils.remove_dir to, true
     FileUtils.mkdir_p to
