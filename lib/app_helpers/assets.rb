@@ -18,7 +18,6 @@ module AppHelpers
   
   def templates(*paths, &block)
     add_assets :templates, paths, &block
-    nil
   end
   
 private
@@ -41,11 +40,15 @@ private
       @layout_assets[type].push(capture(&block)) if block
     else
       paths.push(options) if paths
-      @assets[type].unshift(paths          ) if paths
-      @assets[type].unshift(capture(&block)) if block
+      @assets[type].push(paths          ) if paths
+      @assets[type].push(capture(&block)) if block
     end
     
-    if !paths && !block      
+    if !paths && !block
+      #logger.info type.inspect
+      #logger.info 'LAYOUT ' + @layout_assets[type].inspect
+      #logger.info @assets[type].inspect
+      
       @assets[type] = @layout_assets[type] + @assets[type]
       
       @assets[type].uniq!
@@ -53,7 +56,8 @@ private
       @assets[type].collect! { |a| a[0].respond_to?(:keys) ? nil : a }
       @assets[type].compact!
       
-      @assets[type].collect do |item|
+      js = []
+      assets = @assets[type].collect do |item|
         if item.respond_to?(:pop)
           case type
           when :javascripts
@@ -61,16 +65,22 @@ private
           when :stylesheets
             stylesheet_link_tag *item
           when :templates
-            paths.collect { |path| template item[0], item[1], item[2] }.join "\n"
+            textarea_template item[0], item[1], item[2]
           end + "\n"
         else
           case type
           when :javascripts
-            "<script type='text/javascript'>\n#{item}\n</script>\n" unless item.blank?
+            js.push(item) unless item.blank?
+            nil
           else
             item
           end
         end
+      end.compact
+      if type == :javascripts
+        assets.join + "<script type='text/javascript'>\n#{js.join "\n"}\n</script>"
+      else
+        assets.join
       end
     end
   end

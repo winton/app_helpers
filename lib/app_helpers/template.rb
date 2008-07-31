@@ -1,15 +1,10 @@
 module AppHelpers
   
-  def template(id, path=nil, locals={})
-    create_template id.to_s do
-      render :partial => (path.nil? ? params[:controller] + '/' + id.to_s : path), :locals => locals
-    end
-  end
-  
-private
-
-  def create_template(id, &block)
-    block_to_partial 'app_helpers/template/textarea', { :id => id }, &block
+  def textarea_template(id, path=nil, locals={})
+    controller.render_to_string(:partial => 'app_helpers/template/textarea', :locals => {
+      :id => id,
+      :body => controller.render_to_string(:partial => path, :locals => locals)
+    })
   end
 
 end

@@ -1,10 +1,12 @@
 module AppHelpers
   
+  def widget_base
+    @layout_happened = true
+    require_widget ''
+    render_widget ''
+  end
+  
   def render_widget(*path)
-    unless @rendered_widget
-      @rendered_widget = true
-      render_widget('')
-    end
     widgets, options = widget_instances path
     widgets.collect do |w|
       # we want widgets rendered from the partial to include first
@@ -13,7 +15,7 @@ module AppHelpers
       if options[:include_js] && !js.empty?
         partial + "\n<script type='text/javascript'>\n#{js}\n</script>"
       else
-        javascripts *(@required_widget ? [ :layout => true ] : []) do
+        javascripts *(@layout_happened ? [ :layout => true ] : []) do
           js
         end
         partial
@@ -22,18 +24,16 @@ module AppHelpers
   end
   
   def require_widget(*path)
-    unless @required_widget
-      @required_widget = true
-      require_widget('')
-    end
     widgets, options = widget_instances path
     widgets.each do |w|
       w.copy_assets
-      javascripts *(w.helper_targets(:javascripts) + [ :cache => w.cache, :layout => true ])
-      stylesheets *(w.helper_targets(:stylesheets) + [ :cache => w.cache, :layout => true ])
+      js  = w.helper_targets :javascripts
+      css = w.helper_targets :stylesheets
+      javascripts *(js  + [ :cache => w.cache, :layout => @layout_happened ]) unless js.empty?
+      stylesheets *(css + [ :cache => w.cache, :layout => @layout_happened ]) unless css.empty?
       templates   *(w.assets[:templates].collect do |t|
-        [ File.basename(t), t, options.merge(:options => options) ]
-      end)
+        [ options[:id], t, options.merge(:options => options) ]
+      end) unless w.assets[:templates].empty?
     end
   end
   
@@ -90,16 +90,15 @@ module AppHelpers
     def related_paths(paths)
       last = paths.length - 1
       ordered = []
-      last.step(1, -1) do |x|
+      last.step(0, -1) do |x|
         path = paths[x..last].join '/'
-        if File.exists?("app/widgets/#{path}")
-          ordered << path
+        if x != 0 && File.exists?("app/widgets/#{path}")
+          ordered.unshift(related_paths(path.split('/')))
         end
+        ordered.unshift(paths[0..x].join '/')
       end
-      (0..last).each do |x|
-        ordered << paths[0..x].join('/')
-      end
-      ordered
+      #@logger.info 'RELATED_PATHS ' + ordered.flatten.inspect
+      ordered.flatten
     end
     
     class Assets
@@ -111,13 +110,15 @@ module AppHelpers
       ASSET_TYPES = [ :images, :javascripts, :stylesheets, :templates, :init_js, :init_partials ]
       
       def initialize(path, bind, controller, logger)
-        @bind    = bind
+        @bind     = bind
         @controller = controller
-        @logger  = logger
-        @assets  = {}
-        @options = {}
-        @path    = path
-        @cache   = cache_name
+        @logger   = logger
+        @assets   = {}
+        @options  = {}
+        @rendered = {}
+        @targeted = {}
+        @path     = path
+        @cache    = cache_name
         update_options
         ASSET_TYPES.each do |type|
           update_asset type
@@ -148,6 +149,9 @@ module AppHelpers
       end
       
       def helper_targets(type)
+        return [] if @targeted[type]
+        @targeted[type] = true
+        
         from, to = to_path type
         case type
         when :javascripts
@@ -164,6 +168,9 @@ module AppHelpers
       end
       
       def render_init(type, options=@options)
+        return nil if @rendered[type]
+        @rendered[type] = true
+        
         @assets["init_#{type}".intern].collect do |f|
           @controller.render_to_string :file => f, :locals => options.merge(:options => options)
         end.join("\n")
