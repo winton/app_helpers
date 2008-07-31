@@ -168,8 +168,9 @@ module AppHelpers
       end
       
       def render_init(type, options=@options)
-        return nil if @rendered[type]
-        @rendered[type] = true
+        @rendered[type] ||= {}
+        return nil if @rendered[type][options[:id]]
+        @rendered[type][options[:id]] = true
         
         @assets["init_#{type}".intern].collect do |f|
           @controller.render_to_string :file => f, :locals => options.merge(:options => options)
