@@ -77,6 +77,7 @@ module AppHelpers
     
     def build(path, options)
       opts = {}
+      #@logger.info 'RELATED_PATHS ' + related_paths(path).inspect
       widgets = related_paths(path).collect do |r|
         @widgets[r] ||= Assets.new r, @bind, @controller, @logger
         opts.merge! @widgets[r].options
@@ -88,16 +89,17 @@ module AppHelpers
     private
     
     def related_paths(paths)
-      last = paths.length - 1
       ordered = []
-      last.step(0, -1) do |x|
-        path = paths[x..last].join '/'
-        if x != 0 && File.exists?("app/widgets/#{path}")
-          ordered.unshift(related_paths(path.split('/')))
+      last = paths.length - 1
+      paths.each_index do |x|
+        if x != 0 && File.exists?("app/widgets/#{paths[x]}")
+          ordered << related_paths(paths[x..last])
         end
-        ordered.unshift(paths[0..x].join '/')
+        path = paths[0..x].join '/'
+        if File.exists?("app/widgets/#{path}")
+          ordered << path
+        end
       end
-      #@logger.info 'RELATED_PATHS ' + ordered.flatten.inspect
       ordered.flatten
     end
     
