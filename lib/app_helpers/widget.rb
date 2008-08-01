@@ -12,7 +12,7 @@ module AppHelpers
       # we want widgets rendered from the partial to include first
       partial = w.render_init :partials, options
       js = w.render_init :js, options
-      if options[:include_js] && !js.empty?
+      if options[:include_js] && js && !js.empty?
         partial + "\n<script type='text/javascript'>\n#{js}\n</script>"
       else
         javascripts *(@layout_happened ? [ :layout => true ] : []) do
@@ -37,14 +37,20 @@ module AppHelpers
     end
   end
   
+  def widget_flash_path(*path)
+    flash = path.pop
+    "/flash/widgets/#{path.join('/')}/#{flash}"
+  end
+  
   def widget_image(*path)
     options = path.extract_options!
-    image_tag widget_image_path(*path), options
+    image = path.pop
+    image_tag "widgets/#{path.join('/')}/#{image}", options
   end
   
   def widget_image_path(*path)
     image = path.pop
-    "widgets/#{path.join('/')}/#{image}"
+    "/images/widgets/#{path.join('/')}/#{image}"
   end
   
   def widget_partial(*path)
@@ -109,7 +115,7 @@ module AppHelpers
       attr :options, true
       attr :path,    true
       
-      ASSET_TYPES = [ :images, :javascripts, :stylesheets, :templates, :init_js, :init_partials ]
+      ASSET_TYPES = [ :flash, :images, :javascripts, :stylesheets, :templates, :init_js, :init_partials ]
       
       def initialize(path, bind, controller, logger)
         @bind     = bind
@@ -137,7 +143,7 @@ module AppHelpers
             t.gsub!('/stylesheets/', '/stylesheets/sass/') if t.include?('.sass')
             next unless needs_update?(f, t)
             case key
-            when :images
+            when :flash, :images
               FileUtils.mkdir_p to
               FileUtils.copy f, t
             when :javascripts, :stylesheets
@@ -212,6 +218,7 @@ module AppHelpers
         when :init_partials: base + '/partials/_init'
         when :options:       base + '/options.rb'
         when :templates:     base + '/templates'
+        when :flash:       [ base + '/flash',       "public/flash/widgets"       + slash + path ]
         when :images:      [ base + '/images',      "public/images/widgets"      + slash + path ]
         when :javascripts: [ base + '/javascripts', "public/javascripts/widgets" + slash + path ]
         when :stylesheets: [ base + '/stylesheets', "public/stylesheets/widgets" + slash + path ]
