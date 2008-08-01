@@ -32,7 +32,7 @@ module AppHelpers
       javascripts *(js  + [ :cache => w.cache, :layout => @layout_happened ]) unless js.empty?
       stylesheets *(css + [ :cache => w.cache, :layout => @layout_happened ]) unless css.empty?
       templates   *(w.assets[:templates].collect do |t|
-        [ options[:id], t, options.merge(:options => options) ]
+        [ File.basename(t), t, options.merge(:options => options) ]
       end) unless w.assets[:templates].empty?
     end
   end

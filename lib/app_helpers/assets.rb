@@ -17,14 +17,17 @@ module AppHelpers
   end
   
   def templates(*paths, &block)
-    add_assets :templates, paths, &block
+    paths.each do |path|
+      add_assets :templates, path, &block
+    end
+    add_assets(:templates, paths, &block) if paths.empty?
   end
   
 private
 
   def add_assets(type, paths, &block)
     options = paths.extract_options!
-    paths.flatten!
+    paths.flatten! unless type == :templates
     
     @assets ||= {}
     @assets[type] ||= []
