@@ -1,5 +1,5 @@
 app_helpers
-#########==
+===========
 
 A collection of useful Rails application helpers and rake tasks.
 
