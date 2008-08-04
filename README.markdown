@@ -9,7 +9,7 @@ Installation
 
 Add app_helper submodule
 
-	git submodule add git@github.com:winton/app_helpers.git vendor/plugins/app_helpers
+	git submodule add git://github.com:winton/app_helpers.git vendor/plugins/app_helpers
 	
 Copy resources (**app/views/app_helpers**)
 
