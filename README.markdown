@@ -100,7 +100,8 @@ The view:
 See [rails_widget](https://github.com/winton/rails_widget) for a javascript implementation of Tbl.
 
 
-== Truncate
+Truncate
+--------
 
 ### `better_truncate(text, length = 80, truncate_string = "...")`
 
