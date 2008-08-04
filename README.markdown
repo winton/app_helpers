@@ -1,5 +1,5 @@
 app_helpers
-===========
+#########==
 
 A collection of useful Rails application helpers and rake tasks.
 
@@ -19,24 +19,24 @@ Copy resources (**app/views/app_helpers**)
 Rake Tasks
 ----------
 
-=== `app_helpers`
+### app_helpers
 
 Installs **app/views/app_helpers**, which includes a few partials required by `Tbl` and `Template`.
 
-=== `db:config`
+### db:config
 
 Prompts for a database name and generates **config/database.yml** for you.
 
-=== `git:submodule`
+### git:submodule
 
 Runs `git:submodule:update`, and `git:submodule:pull`.
 
-==== `git:submodule:update`
+#### git:submodule:update
 
 	git submodule init
 	git submodule update
 
-==== `git:submodule:pull`
+#### git:submodule:pull
 
 Finds submodules in **app/widgets**, **config**, and **vendor/plugins** and runs
 
@@ -49,7 +49,7 @@ on each.
 Partials
 --------
 
-=== `block_to_partial(partial_name, options = {}, &block)`
+### block_to_partial(partial_name, options = {}, &block)
 
 Sends the output of a block to a partial as the local variable `body`.
 
@@ -59,7 +59,7 @@ Example:
 	  Two local variables will be sent to the partial; 'x' (0) and 'body' (this text).
 
 
-=== `script_tag_redirect_to(url)`
+### script_tag_redirect_to(url)
 
 Renders an HTML javascript tag with the code `window.location=url`.
 
@@ -67,7 +67,7 @@ Renders an HTML javascript tag with the code `window.location=url`.
 Tbl
 ---
 
-=== `tbl(type, name, unit=nil, *widths, &block)`
+### tbl(type, name, unit=nil, *widths, &block)
 
 Uses the partials in **app/views/app_helpers/tbl** to generate CSS tables (rows of content with specific column widths).
 
@@ -102,6 +102,6 @@ See [rails_widget](https://github.com/winton/rails_widget) for a javascript impl
 
 == Truncate
 
-=== `better_truncate(text, length = 80, truncate_string = "...")`
+### better_truncate(text, length = 80, truncate_string = "...")
 
 Like `truncate`, but does the job without cutting words in half.
