@@ -1,22 +1,7 @@
 desc 'Copy all app_helpers assets'
-task :app_helpers => [ 'app_helpers:widgets', 'app_helpers:views' ]
+task :app_helpers => [ 'app_helpers:views' ]
 
 namespace :app_helpers do
-  desc 'Updates app/widgets assets'
-  task :widgets => [ 'app_helpers:widgets:javascripts', 'app_helpers:widgets:stylesheets' ]
-  
-  namespace :widgets do    
-    desc 'Updates app/widgets/javascripts'
-    task :javascripts do
-      app_helper_resource 'widgets/javascripts', 'app/widgets/javascripts'
-    end
-    
-    desc 'Updates app/widgets/stylesheets'
-    task :stylesheets do
-      app_helper_resource 'widgets/stylesheets', 'app/widgets/stylesheets'
-    end
-  end
-  
   desc 'Updates views/app_helpers'
   task :views do
     app_helper_resource :views, 'app/views/app_helpers'
