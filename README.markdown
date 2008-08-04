@@ -67,7 +67,7 @@ Renders an HTML javascript tag with the code `window.location=url`.
 Tbl
 ---
 
-### Method: `tbl(type, name, unit=nil, *widths, &block)`
+### Method: `tbl(type, name, unit=:px, *widths, &block)`
 
 Uses the partials in **app/views/app_helpers/tbl** to generate CSS tables (rows of content with specific column widths).
 

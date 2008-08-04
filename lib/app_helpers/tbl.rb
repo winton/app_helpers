@@ -1,6 +1,6 @@
 module AppHelpers
   
-  def tbl(type, name, unit=nil, *widths, &block)
+  def tbl(type, name, unit=:px, *widths, &block)
     @tbl        = @tbl        || {}
     @tbl[:rows] = @tbl[:rows] || {}
 
