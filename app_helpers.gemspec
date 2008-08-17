@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name    = 'app_helpers'
-  s.version = '1.0.0'
+  s.version = '1.0.1'
   s.date    = '2008-08-16'
   
   s.summary     = "A collection of useful Rails application helpers and rake tasks"
@@ -12,12 +12,13 @@ Gem::Specification.new do |s|
   
   s.has_rdoc = false
   
-  s.files = %w(
+  s.files = Dir[*%w(
     init.rb
     lib/*
     lib/**/*
     MIT-LICENSE
     README.markdown
     resources/**/*
-    tasks/*)
+    tasks/*
+  )]
 end
