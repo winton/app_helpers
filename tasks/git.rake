@@ -4,6 +4,15 @@ namespace :app_helpers do
   task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins' ]
   
   namespace :git do
+
+    desc 'Initiates git pull on all git repositories'
+    task :pull do
+      Dir["**/*/.git"].collect do |f|
+        puts f
+        system "cd #{File.dirname(f)}; git checkout master; git pull"
+      end
+    end
+    
     desc 'Copies .gitignore to app'
     task :ignore do
       app_helper_resource 'git/ignore', '.gitignore'
