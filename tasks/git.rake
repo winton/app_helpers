@@ -9,7 +9,7 @@ namespace :app_helpers do
     task :pull do
       Dir["**/*/.git"].collect do |f|
         puts f
-        system "cd #{File.dirname(f)}; git checkout master; git pull"
+        `cd #{File.dirname(f)}; git checkout master; git pull`
       end
     end
     
@@ -29,8 +29,12 @@ namespace :app_helpers do
         eval(File.read('config/plugins.rb')).each do |url|
           if url.include?('@')
             dir = "vendor/plugins/#{File.basename(url, '.git')}"
-            FileUtils.rmdir(dir) if File.exists?(dir)
-            `git clone #{url} #{dir}`
+            puts dir
+            if File.exists?(dir)
+              `cd #{dir}; git checkout master; git pull`
+            else
+              `git clone #{url} #{dir}`
+            end
           else
             `ruby script/plugin install #{url}`
           end

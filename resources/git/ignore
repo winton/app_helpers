@@ -3,12 +3,11 @@ app/views/app_helpers
 app/widgets/javascripts
 app/widgets/stylesheets
 app/widgets/vendor
-app/widgets/widget
+app/widgets/widgets
 config/database.yml
 doc/*
 log/*
 public/cache/**/*
 public/media/**/*
 tmp/**/*
-vendor/plugins/*
-vendor/plugins/**/*
+vendor/plugins

@@ -1,8 +1,13 @@
 namespace :app_helpers do
   desc 'Updates app/widgets assets'
-  task :widgets => [ 'app_helpers:widgets:javascripts:to_app', 'app_helpers:widgets:stylesheets:to_app' ]
+  task :widgets => [ 'app_helpers:widgets:javascripts:to_app', 'app_helpers:widgets:stylesheets:to_app', 'app_helpers:widgets:clone' ]
 
-  namespace :widgets do    
+  namespace :widgets do
+    desc 'Updates app/widgets/widgets'
+    task :clone do
+      `git clone git@github.com:winton/widgets.git app/widgets/widgets`
+    end
+    
     namespace :javascripts do
     
       desc 'Copies plugin resources to app'
