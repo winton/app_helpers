@@ -27,9 +27,9 @@ namespace :app_helpers do
       desc 'Clones git repositories to vendor/plugins'
       task :install do
         eval(File.read('config/plugins.rb')).each do |url|
+          puts url
           if url.include?('@')
             dir = "vendor/plugins/#{File.basename(url, '.git')}"
-            puts dir
             if File.exists?(dir)
               `cd #{dir}; git checkout master; git pull`
             else

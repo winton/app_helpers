@@ -7,6 +7,6 @@
   
   git://github.com/mislav/will_paginate.git
 )
-
-# git://github.com/jcnetdev/active_record_without_table.git
-# git://github.com/freelancing-god/thinking-sphinx.git
+#git://github.com/technoweenie/attachment_fu.git
+#git://github.com/jcnetdev/active_record_without_table.git
+#git://github.com/freelancing-god/thinking-sphinx.git
