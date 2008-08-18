@@ -8,12 +8,12 @@ namespace :app_helpers do
     
       desc 'Copies plugin resources to app'
       task :to_app do
-        app_helpers_resource 'widgets/javascripts', 'app/widgets/javascripts'
+        app_helper_resource 'widgets/javascripts', 'app/widgets/javascripts'
       end
 
       desc 'Copies app resources to plugin'
       task :to_plugin do
-        app_helpers_resource 'widgets/javascripts', 'app/widgets/javascripts', true
+        app_helper_resource 'widgets/javascripts', 'app/widgets/javascripts', true
       end
     
     end
@@ -23,12 +23,12 @@ namespace :app_helpers do
     
       desc 'Copies plugin resources to app'
       task :to_app do
-        app_helpers_resource 'widgets/stylesheets', 'app/widgets/stylesheets'
+        app_helper_resource 'widgets/stylesheets', 'app/widgets/stylesheets'
       end
 
       desc 'Copies app resources to plugin'
       task :to_plugin do
-        app_helpers_resource 'widgets/stylesheets', 'app/widgets/stylesheets', true
+        app_helper_resource 'widgets/stylesheets', 'app/widgets/stylesheets', true
       end
     
     end
