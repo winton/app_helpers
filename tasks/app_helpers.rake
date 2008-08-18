@@ -9,11 +9,11 @@ namespace :app_helpers do
     puts "=> Removing old #{type}..."
     puts to
     if File.directory?(from)
-      FileUtils.remove_dir to, true
+      FileUtils.remove_dir(to, true) if File.exists?(to)
       FileUtils.mkdir_p to
     else
-      File.unlink to
-    end if File.exists?(to)
+      File.unlink(to) if File.exists?(to)
+    end
     puts "=> Copying #{type}..."
     (File.directory?(from) ? Dir["#{from}/*"] : [from]).each do |f|
       if File.directory? f
