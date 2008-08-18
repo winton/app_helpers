@@ -1,7 +1,10 @@
 .DS_Store
+app/views/app_helpers/**/*
+app/widgets/javascripts/**/*
+app/widgets/stylesheets/**/*
 app/widgets/vendor/**/*
 app/widgets/widgets/**/*
-config/*.yml
+config/database.yml
 doc/**/*
 log/**/*
 public/cache/**/*

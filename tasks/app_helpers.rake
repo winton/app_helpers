@@ -1,5 +1,5 @@
 desc 'Create database, copy git assets, copy views'
-task :app_helpers => [ 'app_helpers:db', 'app_helpers:git', 'app_helpers:views' ]
+task :app_helpers => [ 'app_helpers:db', 'app_helpers:git', 'app_helpers:views', 'app_helpers:widgets' ]
 
 namespace :app_helpers do
     
