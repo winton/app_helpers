@@ -1,21 +1,34 @@
-namespace :git do
+namespace :app_helpers do
   
-  desc 'Runs all submodule tasks'
-  task :submodule => [ 'git:submodule:update', 'git:submodule:pull' ]
+  desc 'Copies git assets to app'
+  task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins' ]
   
-  namespace :submodule do
-    desc 'Runs submodule init and update'
-    task :update do
-      system "git submodule init"
-      system "git submodule update"
+  namespace :git do
+    desc 'Copies .gitignore to app'
+    task :ignore do
+      File.unlink '.gitignore'
+      app_helper_resource 'git/ignore', ''
+      File.rename 'gitignore', '.gitignore'
     end
     
-    desc 'Initiates git pull on all submodules'
-    task :pull do
-      Dir["vendor/plugins/*/.git", "config/*/.git", "app/widgets/*/.git"].collect do |f|
-        puts f
-        system "cd #{File.dirname(f)}; git checkout master; git pull"
-      end
+    desc 'Copy config/plugins.rb to app'
+    task :plugins do
+      app_helper_resource 'git/plugins', 'config'
     end
+    
+    namespace :plugins do
+      desc 'Clones git repositories to vendor/plugins'
+      task :install do
+        eval(File.read('config/plugins.rb')).each do |url|
+          if url.include('@')
+            dir = "vendor/plugins/#{File.basename(url, '.git')}"
+            FileUtils.rmdir dir
+            `git clone #{url} #{dir}`
+          else
+            `ruby script/plugin install #{url}`
+          end
+        end
+      end
+    end 
   end
 end

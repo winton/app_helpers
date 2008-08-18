@@ -1,0 +1,9 @@
+.DS_Store
+app/widgets/vendor/**/*
+config/*.yml
+doc/**/*
+log/**/*
+public/cache/**/*
+public/media/**/*
+tmp/**/*
+vendor/plugins/**/*
