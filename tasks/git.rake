@@ -6,23 +6,21 @@ namespace :app_helpers do
   namespace :git do
     desc 'Copies .gitignore to app'
     task :ignore do
-      File.unlink '.gitignore'
-      app_helper_resource 'git/ignore', ''
-      File.rename 'gitignore', '.gitignore'
+      app_helper_resource 'git/ignore', '.gitignore'
     end
     
     desc 'Copy config/plugins.rb to app'
     task :plugins do
-      app_helper_resource 'git/plugins', 'config'
+      app_helper_resource 'git/plugins.rb', 'config/plugins.rb'
     end
     
     namespace :plugins do
       desc 'Clones git repositories to vendor/plugins'
       task :install do
         eval(File.read('config/plugins.rb')).each do |url|
-          if url.include('@')
+          if url.include?('@')
             dir = "vendor/plugins/#{File.basename(url, '.git')}"
-            FileUtils.rmdir dir
+            FileUtils.rmdir(dir) if File.exists?(dir)
             `git clone #{url} #{dir}`
           else
             `ruby script/plugin install #{url}`

@@ -1,5 +1,6 @@
 .DS_Store
 app/widgets/vendor/**/*
+app/widgets/widgets/**/*
 config/*.yml
 doc/**/*
 log/**/*
