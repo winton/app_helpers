@@ -7,7 +7,8 @@ namespace :app_helpers do
     from = "#{File.dirname(__FILE__)}/../resources/#{type}"
     from, to = to, from if reverse
     puts "=> Removing old #{type}..."
-    if File.directory?(to)
+    puts to
+    if File.directory?(from)
       FileUtils.remove_dir to, true
       FileUtils.mkdir_p to
     else

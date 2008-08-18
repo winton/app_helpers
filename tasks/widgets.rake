@@ -3,8 +3,7 @@ namespace :app_helpers do
   task :widgets => [ 'app_helpers:widgets:javascripts:to_app', 'app_helpers:widgets:stylesheets:to_app' ]
 
   namespace :widgets do    
-    desc 'Updates app/widgets/javascripts'
-    task :javascripts do
+    namespace :javascripts do
     
       desc 'Copies plugin resources to app'
       task :to_app do
@@ -17,9 +16,8 @@ namespace :app_helpers do
       end
     
     end
-  
-    desc 'Updates app/widgets/stylesheets'
-    task :stylesheets do
+    
+    namespace :stylesheets do
     
       desc 'Copies plugin resources to app'
       task :to_app do
