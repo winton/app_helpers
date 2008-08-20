@@ -1,3 +1,7 @@
+namespace :plugins do
+  task :update => 'app_helpers:git:plugins:update'
+end
+
 namespace :app_helpers do
   
   desc 'Copies git assets to app'
@@ -25,19 +29,21 @@ namespace :app_helpers do
     
     namespace :plugins do
       desc 'Clones git repositories to vendor/plugins'
-      task :install do
+      task :update do
         eval(File.read('config/plugins.rb')).each do |url|
           puts url
           if url.include?('@')
             dir = "vendor/plugins/#{File.basename(url, '.git')}"
-            if File.exists?(dir)
-              `cd #{dir}; git checkout master; git pull`
-            else
+            unless File.exists?(dir)
               `git clone #{url} #{dir}`
             end
           else
             `ruby script/plugin install #{url}`
           end
+        end
+        Dir["#{RAILS_ROOT}/**/*/.git"].each do |dir|
+          puts dir
+          `cd #{dir}/../; git checkout master; git pull origin master`
         end
       end
     end 

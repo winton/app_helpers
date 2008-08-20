@@ -1,3 +1,7 @@
+namespace :db do
+  task :config => 'app_helpers:db:config'
+end
+
 namespace :app_helpers do
   
   desc 'Runs db:config and creates database'
