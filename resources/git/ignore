@@ -10,4 +10,4 @@ log/*
 public/cache/**/*
 public/media/**/*
 tmp/**/*
-vendor/plugins
+vendor

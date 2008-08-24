@@ -30,4 +30,4 @@ What does it do?
 This is constantly being expanded, so [check out the wiki](http://github.com/winton/app_helpers/wikis) for more details.
 
 
-##### Copyright (c) 2008 [Winton Welsh](mailto:mail@wintoni.us), released under the MIT license
+##### Copyright &copy; 2008 [Winton Welsh](mailto:mail@wintoni.us), released under the MIT license

@@ -1,11 +1,12 @@
 namespace :app_helpers do
   desc 'Updates app/widgets assets'
-  task :widgets => [ 'app_helpers:widgets:javascripts:to_app', 'app_helpers:widgets:stylesheets:to_app', 'app_helpers:widgets:clone' ]
+  task :widgets => [ 'app_helpers:widgets:javascripts:to_app', 'app_helpers:widgets:stylesheets:to_app' ]
 
   namespace :widgets do
-    desc 'Updates app/widgets/widgets'
-    task :clone do
-      `git clone git@github.com:winton/widgets.git app/widgets/widgets`
+    desc 'Removes app/widgets assets'
+    task :remove do
+      rm_rf 'app/widgets/javascripts'
+      rm_rf 'app/widgets/stylesheets'
     end
     
     namespace :javascripts do

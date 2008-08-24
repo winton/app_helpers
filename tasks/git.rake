@@ -1,21 +1,9 @@
-namespace :plugins do
-  task :update => 'app_helpers:git:plugins:update'
-end
-
 namespace :app_helpers do
   
   desc 'Copies git assets to app'
   task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins' ]
   
   namespace :git do
-
-    desc 'Initiates git pull on all git repositories'
-    task :pull do
-      Dir["**/*/.git"].collect do |f|
-        puts f
-        `cd #{File.dirname(f)}; git checkout master; git pull`
-      end
-    end
     
     desc 'Copies .gitignore to app'
     task :ignore do
@@ -27,24 +15,54 @@ namespace :app_helpers do
       app_helper_resource 'git/plugins.rb', 'config/plugins.rb'
     end
     
+    desc 'Removes files from rake app_helpers:git'
+    task :remove do
+      `rm .gitignore`
+      `rm config/plugins.rb`
+    end
+    
     namespace :plugins do
-      desc 'Clones git repositories to vendor/plugins'
-      task :update do
-        eval(File.read('config/plugins.rb')).each do |url|
-          puts url
-          if url.include?('@')
-            dir = "vendor/plugins/#{File.basename(url, '.git')}"
-            unless File.exists?(dir)
-              `git clone #{url} #{dir}`
-            end
-          else
-            `ruby script/plugin install #{url}`
+      desc 'Adds plugins defined in config/plugins.rb'
+      task :install do
+        eval(File.read('config/plugins.rb')).each do |plugin|
+          if plugin == 'haml'
+            puts plugin
+            `haml --rails .`
+            next
+          end
+          puts plugin[:repo]
+          install_path = mkdir_p(plugin[:to] || "vendor/plugins/#{File.basename(plugin[:repo], '.git')}")
+          Dir.chdir install_path do
+            `git init`
+            `git remote add origin #{plugin[:repo]}`
+            `git pull #{plugin[:depth] ? "--depth #{plugin[:depth]} " : ''}origin #{git_head(plugin)}`
           end
         end
-        Dir["#{RAILS_ROOT}/**/*/.git"].each do |dir|
-          puts dir
-          `cd #{dir}/../; git checkout master; git pull origin master`
+      end
+      
+      desc 'Updates plugins defined in config/plugins.rb'
+      task :update do
+        eval(File.read('config/plugins.rb')).each do |plugin|
+          puts plugin[:repo]
+          Dir.chdir install_path do
+            `git pull origin #{git_head(plugin)}`
+            `git checkout #{git_head(plugin)}`
+          end
         end
+      end
+      
+      desc 'Removes plugins defined in config/plugins.rb'
+      task :remove do
+        eval(File.read('config/plugins.rb')).each do |plugin|
+          puts plugin[:repo]
+          rm_rf(plugin[:to] || "vendor/plugins/#{File.basename(plugin[:repo], '.git')}")
+        end
+      end
+      
+      def git_head(plugin)
+        return "tags/#{plugin[:tag]}"    if plugin[:tag]
+        return "tags/#{plugin[:branch]}" if plugin[:branch]
+        return 'master'
       end
     end 
   end
