@@ -12,7 +12,7 @@ namespace :app_helpers do
     
     desc 'Copy config/plugins.rb to app'
     task :plugins do
-      app_helper_resource 'git/plugins.rb', 'config/plugins.rb'
+      app_helper_resource 'git/plugins.rb', 'config/plugins.rb', false, false
     end
     
     desc 'Removes files from rake app_helpers:git'
@@ -44,6 +44,7 @@ namespace :app_helpers do
       task :update do
         eval(File.read('config/plugins.rb')).each do |plugin|
           puts plugin[:repo]
+          install_path = plugin[:to] || "vendor/plugins/#{File.basename(plugin[:repo], '.git')}"
           Dir.chdir install_path do
             `git pull origin #{git_head(plugin)}`
             `git checkout #{git_head(plugin)}`
