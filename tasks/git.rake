@@ -27,8 +27,7 @@ namespace :app_helpers do
       desc 'Adds plugins defined in config/plugins.rb'
       task :install do
         puts "Review config/plugins.rb. Install plugins now? (y/n)"
-        yn = STDIN.gets
-        if yn.capitalize == 'Y'
+        if STDIN.gets.upcase.strip == 'Y'
           eval(File.read('config/plugins.rb')).each do |plugin|
             if plugin == 'haml'
               puts plugin
