@@ -17,11 +17,12 @@ namespace :app_helpers do
   desc 'Removes files created by rake app_helpers'
   task :remove => [ 'app_helpers:db:remove', 'app_helpers:git:remove', 'app_helpers:views:remove', 'app_helpers:widgets:remove' ]
     
-  def app_helper_resource(type, to, reverse=false)
+  def app_helper_resource(type, to, reverse=false, overwrite=true)
     from = "#{File.dirname(__FILE__)}/../resources/#{type}"
     from, to = to, from if reverse
     puts "=> Removing old #{type}..."
     puts to
+    return if File.exists?(to) && !overwrite
     if File.directory?(from)
       FileUtils.remove_dir(to, true) if File.exists?(to)
       FileUtils.mkdir_p to
