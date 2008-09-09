@@ -1,18 +1,22 @@
 namespace :app_helpers do
   
   desc 'Copies git assets to app'
-  task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins' ]
+  task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins', 'app_helpers:git:plugins:install' ]
   
   namespace :git do
     
     desc 'Copies .gitignore to app'
     task :ignore do
-      app_helper_resource 'git/ignore', '.gitignore'
+      unless File.exists?('.gitignore')
+        app_helper_resource 'git/ignore', '.gitignore'
+      end
     end
     
     desc 'Copy config/plugins.rb to app'
     task :plugins do
-      app_helper_resource 'git/plugins.rb', 'config/plugins.rb'
+      unless File.exists?('config/plugins.rb')
+        app_helper_resource 'git/plugins.rb', 'config/plugins.rb'
+      end
     end
     
     desc 'Removes files from rake app_helpers:git'
@@ -21,21 +25,25 @@ namespace :app_helpers do
       `rm config/plugins.rb`
     end
     
-    namespace :plugins do
+    namespace :plugins do      
       desc 'Adds plugins defined in config/plugins.rb'
       task :install do
-        eval(File.read('config/plugins.rb')).each do |plugin|
-          if plugin == 'haml'
-            puts plugin
-            `haml --rails .`
-            next
-          end
-          puts plugin[:repo]
-          install_path = mkdir_p(plugin[:to] || "vendor/plugins/#{File.basename(plugin[:repo], '.git')}")
-          Dir.chdir install_path do
-            `git init`
-            `git remote add origin #{plugin[:repo]}`
-            `git pull #{plugin[:depth] ? "--depth #{plugin[:depth]} " : ''}origin #{git_head(plugin)}`
+        puts "Review config/plugins.rb. Install plugins now? (y/n)"
+        yn = STDIN.gets
+        if yn.capitalize == 'Y'
+          eval(File.read('config/plugins.rb')).each do |plugin|
+            if plugin == 'haml'
+              puts plugin
+              `haml --rails .`
+              next
+            end
+            puts plugin[:repo]
+            install_path = mkdir_p(plugin[:to] || "vendor/plugins/#{File.basename(plugin[:repo], '.git')}")
+            Dir.chdir install_path do
+              `git init`
+              `git remote add origin #{plugin[:repo]}`
+              `git pull #{plugin[:depth] ? "--depth #{plugin[:depth]} " : ''}origin #{git_head(plugin)}`
+            end
           end
         end
       end

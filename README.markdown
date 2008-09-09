@@ -19,10 +19,6 @@ Set up a fresh project
 
 	rake app_helpers
 
-### Update plugins (see config/plugins.rb)
-
-	rake plugins:update
-
 
 What does it do?
 ----------------
