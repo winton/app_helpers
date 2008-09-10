@@ -1,13 +1,15 @@
 namespace :app_helpers do
   
   desc 'Copies git assets to app'
-  task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins' ]
+  task :git => [ 'app_helpers:git:ignore', 'app_helpers:git:plugins', 'app_helpers:git:plugins:install' ]
   
   namespace :git do
     
     desc 'Copies .gitignore to app'
     task :ignore do
-      app_helper_resource 'git/ignore', '.gitignore'
+      unless File.exists?('.gitignore')
+        app_helper_resource 'git/ignore', '.gitignore'
+      end
     end
     
     desc 'Copy config/plugins.rb to app'
@@ -21,11 +23,14 @@ namespace :app_helpers do
       `rm config/plugins.rb`
     end
     
-    namespace :plugins do
+    namespace :plugins do      
       desc 'Adds plugins defined in config/plugins.rb'
       task :install do
-        eval(File.read('config/plugins.rb')).each do |plugin|
-          install_plugin plugin
+        puts "Review config/plugins.rb. Install plugins now? (y/n)"
+        if STDIN.gets.upcase.strip == 'Y'
+          eval(File.read('config/plugins.rb')).each do |plugin|
+            install_plugin plugin
+          end
         end
       end
       
