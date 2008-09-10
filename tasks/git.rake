@@ -61,6 +61,10 @@ namespace :app_helpers do
       end
       
       def install_plugin(plugin)
+        if plugin[:repo].include?('app_helpers')
+          puts "Skipping #{plugin[:repo]}"
+          return
+        end
         path = remove_plugin plugin
         if plugin == 'haml'
           puts 'Installing haml'

@@ -1,4 +1,5 @@
 [
+  { :repo => 'git@github.com:winton/app_helpers.git' },
   { :repo => 'git@github.com:winton/acts_as_relationable.git' },
   { :repo => 'git@github.com:winton/authentication.git' },
   { :repo => 'git@github.com:winton/cookbook.git' },
