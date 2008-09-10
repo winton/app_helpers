@@ -61,7 +61,7 @@ namespace :app_helpers do
       end
       
       def install_plugin(plugin)
-        if plugin[:repo].include?('app_helpers')
+        if plugin[:repo] && plugin[:repo].include?('app_helpers')
           puts "Skipping #{plugin[:repo]}"
           return
         end
