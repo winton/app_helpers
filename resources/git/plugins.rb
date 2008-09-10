@@ -5,7 +5,7 @@
   { :repo => 'git@github.com:winton/cookbook.git' },
   { :repo => 'git@github.com:winton/rails_widget.git' },
   { :repo => 'git@github.com:winton/widgets.git', :to => 'app/widgets/widgets' },
-  { :repo => 'git://github.com/mislav/will_paginate.git' },
+  { :repo => 'git://github.com/mislav/will_paginate.git', :depth => 1, :tag => '2.3.2' },
   'haml'
 ]
 #{ :repo => 'git://github.com/rails/rails.git', :to => 'vendor/rails', :depth => 1 }
