@@ -13,7 +13,7 @@ Set up a fresh project
 
 ### Install
 
-	script/plugin install git://github.com:winton/app_helpers.git
+	script/plugin install git://github.com/winton/app_helpers.git
 
 ### Run rake task
 
