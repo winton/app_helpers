@@ -10,7 +10,7 @@ namespace :app_helpers do
   namespace :db do
     desc 'Creates a generic database.yml file'
     task :config do
-      if ENV['db'] != 'false'
+      if ENV['quiet'] != 'true'
         puts('Database name?') unless ENV['db']
         File.open 'config/database.yml', 'w' do |file|
           file.write "development: &defaults

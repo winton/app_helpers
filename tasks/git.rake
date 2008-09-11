@@ -26,8 +26,13 @@ namespace :app_helpers do
     namespace :plugins do      
       desc 'Adds plugins defined in config/plugins.rb'
       task :install do
-        puts "Review config/plugins.rb. Install plugins now? (y/n)"
-        if STDIN.gets.upcase.strip == 'Y'
+        if ENV['quiet'] == 'true'
+          go = true
+        else
+          puts "Review config/plugins.rb. Install plugins now? (y/n)"
+          go = STDIN.gets.upcase.strip == 'Y'
+        end
+        if go
           eval(File.read('config/plugins.rb')).each do |plugin|
             install_plugin plugin
           end
