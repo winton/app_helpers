@@ -7,7 +7,7 @@ namespace :app_helpers do
     
     desc 'Copies .gitignore to app'
     task :ignore do
-      unless File.exists?('.gitignore')
+      unless ENV['quiet'] == 'true'
         app_helper_resource 'git/ignore', '.gitignore'
       end
     end
