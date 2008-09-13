@@ -11,28 +11,27 @@ module AppHelpers
     content_length = doc.inner_text.chars.length
     actual_length = max_length - ellipsis_length
 
-    content_length > max_length ? doc.truncate(actual_length).inner_html + ellipsis : text.to_s
+    content_length > max_length ? doc.truncate(actual_length, logger).inner_html + ellipsis : text.to_s
   end
 
   module HpricotTruncator
     module NodeWithChildren
-      def truncate(max_length)
+      def truncate(max_length, logger)
         return self if inner_text.chars.length <= max_length
         truncated_node = self.dup
         truncated_node.children = []
         each_child do |node|
           remaining_length = max_length - truncated_node.inner_text.chars.length
           break if remaining_length == 0
-          truncated_node.children << node.truncate(remaining_length)
+          truncated_node.children << node.truncate(remaining_length, logger)
         end
         truncated_node
       end
     end
 
     module TextNode
-      def truncate(max_length)
-        # We're using String#scan because Hpricot doesn't distinguish entities.
-        Hpricot::Text.new(content.scan(/&#?[^\W_]+;|./).first(max_length).join)
+      def truncate(max_length, logger)
+        Hpricot::Text.new(content[/\A.{#{max_length}}\w*\;?/m][/.*[\w\;]/m])
       end
     end
 
