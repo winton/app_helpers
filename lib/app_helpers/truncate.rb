@@ -31,7 +31,9 @@ module AppHelpers
 
     module TextNode
       def truncate(max_length, logger)
-        Hpricot::Text.new(content[/\A.{#{max_length}}\w*\;?/m][/.*[\w\;]/m])
+        content.chars.length < max_length ?
+          Hpricot::Text.new(content) :
+          Hpricot::Text.new(content[/\A.{#{max_length}}\w*\;?/m][/.*[\w\;]/m])
       end
     end
 

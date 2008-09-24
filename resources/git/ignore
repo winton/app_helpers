@@ -9,6 +9,5 @@ doc/*
 log/*
 public/cache/**/*
 public/media/**/*
-public/images/captcha/*
 tmp/**/*
 vendor
