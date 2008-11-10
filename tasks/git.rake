@@ -105,8 +105,9 @@ namespace :app_helpers do
       end
       
       def git_head(plugin)
-        return "tags/#{plugin[:tag]}"      if plugin[:tag]
+        return plugin[:commit]             if plugin[:commit]
         return "origin/#{plugin[:branch]}" if plugin[:branch]
+        return "tags/#{plugin[:tag]}"      if plugin[:tag]
         return 'master'
       end
     end 
