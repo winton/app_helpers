@@ -15,4 +15,5 @@ public/flash/widgets
 public/images/widgets
 public/javascripts/widgets
 public/stylesheets/widgets
+public/stylesheets/sass/widgets
 db/sphinx/development/*
