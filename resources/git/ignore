@@ -11,3 +11,8 @@ public/cache/**/*
 public/media/**/*
 tmp/**/*
 vendor
+public/flash/widgets
+public/images/widgets
+public/javascripts/widgets
+public/stylesheets/widgets
+db/sphinx/development/*
