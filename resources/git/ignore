@@ -17,3 +17,4 @@ public/javascripts/widgets
 public/stylesheets/widgets
 public/stylesheets/sass/widgets
 db/sphinx/development/*
+config/*.sphinx.conf
