@@ -32,6 +32,10 @@ var Tbl = function() {
     if (col == 0) {
       margin  = widths.sum();
       margin -= widths[col];
+      if (x != 0)
+        container.adopt(new Element('div', {
+          styles: { clear: 'both' }
+        }));
     }
     var first_last = (col == 0 ? ' first' : col == widths.length -1 ? ' last' : '');
     var div = new Element('div', {
@@ -52,7 +56,6 @@ var Tbl = function() {
     if (col != 0)
       margin -= widths[col];
   });
-  
   container.adopt(new Element('div', {
     styles: { clear: 'both' }
   }));
