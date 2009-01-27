@@ -2,9 +2,9 @@
   { :repo => 'git@github.com:winton/app_helpers.git' },
   { :repo => 'git@github.com:winton/acts_as_relationable.git' },
   { :repo => 'git@github.com:winton/authentication.git' },
-  { :repo => 'git@github.com:winton/cookbook.git' },
   { :repo => 'git@github.com:winton/rails_widget.git' },
   { :repo => 'git@github.com:winton/widgets.git', :to => 'app/widgets/widgets' },
+  { :repo => 'git://github.com/AppTower/ubistrano.git', :to => 'config/ubistrano' },
   { :repo => 'git://github.com/mislav/will_paginate.git', :depth => 1, :tag => '2.3.2' },
   'haml'
 ]

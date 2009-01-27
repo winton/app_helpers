@@ -5,6 +5,7 @@ app/widgets/stylesheets
 app/widgets/vendor
 app/widgets/widgets
 config/database.yml
+config/ubistrano
 doc/*
 log/*
 public/cache/**/*
