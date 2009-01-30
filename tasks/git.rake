@@ -20,7 +20,7 @@ namespace :app_helpers do
     desc 'Removes files from rake app_helpers:git'
     task :remove do
       `rm .gitignore`
-      `rm config/plugins.rb`
+      #`rm config/plugins.rb`
     end
     
     namespace :plugins do      
@@ -86,6 +86,10 @@ namespace :app_helpers do
       end
       
       def remove_plugin(plugin)
+        if plugin[:repo] && plugin[:repo].include?('app_helpers')
+          puts "Skipping #{plugin[:repo]}"
+          return
+        end
         path = install_path plugin
         return path unless File.exists?(path)
         puts "Removing #{path}"
