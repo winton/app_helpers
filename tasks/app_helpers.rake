@@ -20,9 +20,9 @@ namespace :app_helpers do
   def app_helper_resource(type, to, reverse=false, overwrite=true)
     from = "#{File.dirname(__FILE__)}/../resources/#{type}"
     from, to = to, from if reverse
+    return if File.exists?(to) && !overwrite
     puts "=> Removing old #{type}..."
     puts to
-    return if File.exists?(to) && !overwrite
     if File.directory?(from)
       FileUtils.remove_dir(to, true) if File.exists?(to)
       FileUtils.mkdir_p to
