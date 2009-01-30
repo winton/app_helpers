@@ -9,6 +9,7 @@ namespace :app_helpers do
     task :ignore do
       unless ENV['quiet'] == 'true'
         app_helper_resource 'git/ignore', '.gitignore', false, false
+        `git add .gitignore`
       end
     end
     
