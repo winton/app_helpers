@@ -24,8 +24,6 @@ namespace :app_helpers do
   task :reinstall do
     `rm -Rf vendor/plugins/app_helpers`
     `git clone git@github.com:winton/app_helpers.git vendor/plugins/app_helpers`
-    Rake::Task['app_helpers:remove'].invoke
-    Rake::Task['app_helpers'].invoke
   end
     
   def app_helper_resource(type, to, reverse=false, overwrite=true)

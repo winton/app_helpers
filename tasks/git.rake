@@ -8,7 +8,7 @@ namespace :app_helpers do
     desc 'Copies .gitignore to app'
     task :ignore do
       unless ENV['quiet'] == 'true'
-        app_helper_resource 'git/ignore', '.gitignore'
+        app_helper_resource 'git/ignore', '.gitignore', false, false
       end
     end
     
@@ -19,8 +19,10 @@ namespace :app_helpers do
     
     desc 'Removes files from rake app_helpers:git'
     task :remove do
-      `rm .gitignore`
-      #`rm config/plugins.rb`
+      puts "Remove .gitignore? (y/n)"
+      `rm .gitignore` if STDIN.gets.upcase.strip == 'Y'
+      puts "Remove config/plugins.rb? (y/n)"
+      `rm config/plugins.rb` if STDIN.gets.upcase.strip == 'Y'
     end
     
     namespace :plugins do      
