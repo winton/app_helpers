@@ -16,18 +16,15 @@ namespace :app_helpers do
           file.write "development: &defaults
   adapter: mysql
   database: #{ENV['db'] || STDIN.gets.strip}
-  username: deploy
+  username: root
   password: 
   host: localhost
 
-#{ENV['db']}_test:
+test:
   <<: *defaults
 
-#{ENV['db']}_production:
+production:
   <<: *defaults
-  
-#{ENV['db']}_staging:
-  <<: *defaults  
 "
         end
       end
